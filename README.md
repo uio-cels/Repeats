@@ -184,10 +184,15 @@ bedtools getfasta -fi genome.fa -bed genome.fa.TPSI.allHits.chains.bestPerLocus.
 _tPSI.fasta_ is the final output.
 
 ##4. RepeatModeler
-
+###Build database
 ```perl
 module load repeatmodeler/1.0.8
-RepeatModeler -database genome.fa -pa 20 
+BuildDatabase -name repmoddatabase -engine ncbi genome.fa
+```
+###Run RepeatModeler
+```perl
+module load repeatmodeler/1.0.8
+RepeatModeler -database repmoddatabase
 ```
 Time: 12 hours on a 600 mb genome.
 
