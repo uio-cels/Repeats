@@ -65,7 +65,7 @@ And select for the relevant LTR retrotransposons.
 gt select -rule_files filter_protein_match.lua -- < gadMor2_ltrdigest.output.sort.gff > gadMor2_ltrdigest.output.withdomains.gff
 ```
 
-The rule file:
+The rule file (from **https://github.com/satta/ltrsift/tree/master/filters**)
 
 ```
 name        = "Protein Domain Filter"
