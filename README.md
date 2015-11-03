@@ -12,6 +12,8 @@ genome.fa.masked is a FASTA file of the genome with simple repeats masked as N. 
 
 The reason for masking simple repeats first is that transposable element detection software often gets confused by simple repeats and designate simple repeat regions as transposable elements. 
 
+
+
 ##2. LTRharvest and LTRdigest
 
 LTRharvest searches the genome for putative LTR retrotransposons. LTRharvest needs index files in order for it to work. The suffixerator command in GenomeTools produces such index files.
@@ -189,6 +191,10 @@ _tPSI.fasta_ is the final output.
 module load repeatmodeler/1.0.8
 BuildDatabase -name repmoddatabase -engine ncbi genome.fa
 ```
+
+The .out file is like this:
+
+
 ###Run RepeatModeler
 ```perl
 module load repeatmodeler/1.0.8
