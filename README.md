@@ -1,10 +1,5 @@
 # Repeat library creation
 
-##One library with all repeats, classification doesn't matter, but no "real gene" ORFS.
-
-For masking before gene annotation.
-
-##One library with annotated, verified repeats
 
 ##1. RepARK
 
@@ -18,7 +13,6 @@ zcat 300_pe_2.fq.gz > 300_pe_2.fq &
 RepARK.pl -o repark_output -p 16 -l 300_pe_1.fq -l 300_pe_2.fq  -t 400 1> repark.out 2> repark.err
 ```
 
-repeat_lib fasta
 
 ##2. LTRharvest and LTRdigest
 
