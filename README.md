@@ -1,18 +1,24 @@
 # Repeat library creation
 
-##1. Masking simple repeats
+##One library with all repeats, classification doesn't matter, but no "real gene" ORFS.
 
-```perl 
-module load repeatmasker/4.0.5
-RepeatMasker -noint -pa 16 -species eukaryota -dir . genome.fa
+For masking before gene annotation.
+
+##One library with annotated, verified repeats
+
+##1. RepARK
+
+RepARK detects repetetive elements from raw reads.
+
 ```
-Important output files: genome.fa.masked and genome.fa.out 
-							
-genome.fa.masked is a FASTA file of the genome with simple repeats masked as N. This also produces a GFF file of detected simple repeats that can be used as a simple repeat track in a genome browser.
+module load jellyfish velvet repark
+zcat 300_pe_1.fq.gz > 300_pe_1.fq &
+zcat 300_pe_2.fq.gz > 300_pe_2.fq &
 
-The reason for masking simple repeats first is that transposable element detection software often gets confused by simple repeats and designate simple repeat regions as transposable elements. 
+RepARK.pl -o repark_output -p 16 -l 300_pe_1.fq -l 300_pe_2.fq  -t 400 1> repark.out 2> repark.err
+```
 
-
+repeat_lib fasta
 
 ##2. LTRharvest and LTRdigest
 
@@ -370,7 +376,7 @@ if __name__ == '__main__':
                         print ">" + record.id + "\n" + record.seq
 ```
 
-##7. Clustering using USEARCH
+##7. Clustering using CD-HIT 
 
 ###Filtering out simple repeats to avoid issues while clustering
 
@@ -411,31 +417,68 @@ if __name__ == '__main__':
 python2 scripts/lenght.of.sequences.py -i AllRepeats.chosen.stripped.filtered.no_sr.lib | sort -h | uniq -c |less
 ```
 
-###Sorting for USEARCH
-
+###Sorting before clustering
 ```
-module load usearch
-
-usearch -sortbylength ../AllRepeats.chosen.stripped.filtered.no_sr.lib --output AllRepeats.chosen.stripped.filtered.no_sr.usearch.sorted.lib --log usearch.log
+usearch -sortbylength AllRepeats.chosen.stripped.filtered.no_sr.lib --output AllRepeats.chosen.stripped.filtered.no_sr.lib.srt
 ```
 
-###Running USEARCH
-
-```
-usearch -cluster_fast AllRepeats.chosen.stripped.filtered.no_sr.usearch.sorted.lib --id 0.8 --centroids my_centroids.fa --uc result.uc -consout final.nr.consensus.fa -msaout aligned.fasta --log usearch2.log
-```
-
-The output file final.nr.consensus.fa is the consensus sequences. Remove header text using:
+###Cleaning before clustering
 
 ```perl
-sed 's/centroid=//g' final.nr.consensus.fa > final.nr.consensus.fa.stripped1
-sed 's/;seqs=.*//g' final.nr.consensus.fa.stripped1 > final.nr.consensus.fa.stripped2
+python2 sequence_cleaner.py AllRepeats.chosen.stripped.filtered.no_sr.lib.srt 200 30
+```
+
+###Clustering with CD-HIT-EST
+
+```
+module load cd-hit/4.6.1
+cd-hit-est -i clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt -o clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est
+```
+
+###Sorting again
+```
+usearch -sortbylength clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est --output clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt
+```
+
+###Running TRF to remove the rest of simple repeats
+
+```
+trf clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt 2 7 7 80 10 50 500 -m -h
+```
+
+###Cleaning
+```
+python2 sequence_cleaner.py clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt.2.7.7.80.10.50.500.mask 200 30
+```
+
+###Sorting again
+```
+usearch -sortbylength clear_clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt.2.7.7.80.10.50.500.mask --output clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt.2.7.7.80.10.50.500.mask.srt
 ```
 
 ##8. Mask the genome using the final library
 
+###First merge with RepBase teleostei-library and simple repeats detected by repeatmodeler
+
 ```
-RepeatMasker -pa 16 -dir . -lib ../usearch/final.nr.consensus.fa.stripped2 ../gadMor2.assembly.no_underscores.fasta.masked 1>repmask_output 2>repmask_error
+#renaming a bit:
+mv clear_AllRepeats.chosen.stripped.filtered.no_sr.lib.srt.cd-hit.est.srt.2.7.7.80.10.50.500.mask.srt denovoTEs.lib
+cat denovoTEs.lib repbase.update.04102015.teleostei.lib repmod_simple_repeats > AllRepeats2.lib ##About 12000 sequences
 ```
+
+
+###Do the masking
+
+```
+RepeatMasker -a -pa 16 -dir . -lib AllRepeats2.lib gadMor2.assembly.no_underscores.fasta
+```
+
+###Summarize the masking
+```
+buildSummary.pl -species teleostei gadMor2.assembly.no_underscores.fasta.out > Repeats.Summary
+```
+
+###Create Repeat Landscape
+
 
 
