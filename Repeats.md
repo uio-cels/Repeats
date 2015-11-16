@@ -1,9 +1,9 @@
 #Repeats
---
+
 In short the pipeline does the following:
 
 * LTRharvest are run for collection of LTR retrotransposons and TRIMs
-* LTRdigest refines the output of LTRharvest by looking for primer binding sites and retrotransposon specific enzymes.
+* LTRdigest refines the output of LTRharvest by looking for primer binding sites and retrotransposon specific enzymes. FASTA sequences are extracted from the GFF file produced.
 * Repeats are also collected using RepeatModeler.
 * More divergent LTR retrotransposons and DNA transposons are collected using TransposonPSI. FASTA sequences are extracted from the GFF and classified according to protein homology.
 * All sequences are clustered using USEARCH.
@@ -11,26 +11,30 @@ In short the pipeline does the following:
 * RepeatMasker is run three times; only with the _de novo_ library, only with the RepBase library and once with a merged variant.
 * Finally, summaries of the RepeatMasker results are produced.
 
+The pipeline is dependent on these programs:
+
+[genometools/1.5.7](http://www.genometools.org)
+
+[repeatmasker/4.0.5](http://www.repeatmasker.org/RepeatModeler.html)
+
+[blast/2.2.26](http://mirrors.vbi.vt.edu/mirrors/ftp.ncbi.nih.gov/blast/executables/release/2.2.26/)
+
+[hmmer/3.0](http://hmmer.janelia.org/download.html)
+
+[muscle/3.8.31](http://www.drive5.com/muscle/downloads.htm)
+
+[python2/2.7.9](https://www.python.org/downloads/release/python-279/)
+
+[usearch/7.0.1090](http://www.drive5.com/usearch/download.html)
+
+[blast+/2.2.29](http://www.ncbi.nlm.nih.gov/books/NBK279671/)
+
+[repeatmasker/4.0.5](http://www.repeatmasker.org/RMDownload.html)
+
+[bedtools/2.17.0](https://code.google.com/p/bedtools/downloads/list)
 
 
 --
-####Load necessary modules
-
-```
-module load genometools/1.5.7 
-module load repeatmodeler/1.0.8
-module load blast/2.2.26
-module load perlmodules/5.10_2
-module load hmmer/3.0
-module load muscle/3.8.31
-module load python2/2.7.9
-module load usearch/7.0.1090
-module load blast+/2.2.29
-module load repeatmasker/4.0.5
-module load bedtools/2.17.0
-```
-
-Change "scaffolds" into your genome name.
 
 You will need these files:
 
@@ -63,6 +67,22 @@ You will need these files:
 >RepeatPeps.lib
 
 >repbase.update.lib
+
+####Load necessary modules
+
+```
+module load genometools/1.5.7 
+module load repeatmodeler/1.0.8
+module load blast/2.2.26
+module load perlmodules/5.10_2
+module load hmmer/3.0
+module load muscle/3.8.31
+module load python2/2.7.9
+module load usearch/7.0.1090
+module load blast+/2.2.29
+module load repeatmasker/4.0.5
+module load bedtools/2.17.0
+```
 
 ##Indexing genome
 
