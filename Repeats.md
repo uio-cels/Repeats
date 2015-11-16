@@ -11,6 +11,10 @@ In short the pipeline does the following:
 * RepeatMasker is run three times; only with the _de novo_ library, only with the RepBase library and once with a merged variant.
 * Finally, summaries of the RepeatMasker results are produced.
 
+Flowchart:
+![alt text](https://github.com/uio-cees/willibr-TE-pipeline/blob/master/repeatspipeline.pdf)
+
+
 The pipeline is dependent on these programs:
 
 [genometools/1.5.7](http://www.genometools.org)
@@ -36,7 +40,7 @@ The pipeline is dependent on these programs:
 
 --
 
-You will need these files:
+You will need these files to be in the directory along with the genome of study.
 
 >eukaryotic-tRNAs.fa
 >
