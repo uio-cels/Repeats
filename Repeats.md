@@ -12,7 +12,7 @@ In short the pipeline does the following:
 * Finally, summaries of the RepeatMasker results are produced.
 
 Flowchart:
-![alt text](https://github.com/uio-cees/willibr-TE-pipeline/blob/master/repeatspipeline.pdf)
+![alt text](https://github.com/uio-cees/willibr-TE-pipeline/blob/master/repeatspipeline.png)
 
 
 The pipeline is dependent on these programs:
