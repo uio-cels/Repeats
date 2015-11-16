@@ -36,19 +36,19 @@ You will need these files:
 
 >eukaryotic-tRNAs.fa
 >
->retro99.CRL_Step1.pl
+>retro99.custom_script1.pl
 >
->retro85.CRL_Step1.pl
+>retro85.custom_script1.pl
 >
->TRIM85.CRL_Step1.pl
+>TRIM85.custom_script1.pl
 >
->TRIM99.CRL_Step1.pl
+>TRIM99.custom_script1.pl
 >
->CRL_Step2.pl
+>custom_script2.pl
 >
 >filter\_protein_match.lua
 >
->CRL_Step3.pl
+>custom_script3.pl
 >
 >change\_headers\_to_seqN.py
 >
@@ -133,10 +133,10 @@ scaffolds> scaffolds.TRIM.gffT99.dgt
 
 ####Filtering LTRdigest results
 ```
-perl retro99.CRL_Step1.pl -gff scaffolds.retrotransposons.gff99.dgt
-perl retro85.CRL_Step1.pl -gff scaffolds.retrotransposons.gff85.dgt 
-perl TRIM85.CRL_Step1.pl -gff scaffolds.TRIM.gffT85.dgt 
-perl TRIM99.CRL_Step1.pl -gff scaffolds.TRIM.gffT99.dgt 
+perl retro99.custom_script1.pl -gff scaffolds.retrotransposons.gff99.dgt
+perl retro85.custom_script1.pl -gff scaffolds.retrotransposons.gff85.dgt 
+perl TRIM85.custom_script1.pl -gff scaffolds.TRIM.gffT85.dgt 
+perl TRIM99.custom_script1.pl -gff scaffolds.TRIM.gffT99.dgt 
 ```
 
 ####Seleting retrotransposons with enzymes
@@ -153,27 +153,27 @@ mkdir scaffolds.retro85.fasta_files
 ```
 ####Copying files to folders
 ```
-cp /work/users/willibr/testing/CRL_Step3.pl scaffolds.TRIM85.fasta_files
-cp /work/users/willibr/testing/CRL_Step3.pl scaffolds.TRIM99.fasta_files
-cp /work/users/willibr/testing/CRL_Step3.pl scaffolds.retro99.fasta_files
-cp /work/users/willibr/testing/CRL_Step3.pl scaffolds.retro85.fasta_files
+cp /work/users/willibr/testing/custom_script3.pl scaffolds.TRIM85.fasta_files
+cp /work/users/willibr/testing/custom_script3.pl scaffolds.TRIM99.fasta_files
+cp /work/users/willibr/testing/custom_script3.pl scaffolds.retro99.fasta_files
+cp /work/users/willibr/testing/custom_script3.pl scaffolds.retro85.fasta_files
 
-cp retro85.CRL_Step1_Passed_Elements.txt scaffolds.retro85.fasta_files/
+cp retro85.custom_script1_Passed_Elements.txt scaffolds.retro85.fasta_files/
 cp scaffolds.retrotransposons.out85 scaffolds.retro85.fasta_files/
 cp scaffolds.retrotransposons.result85 scaffolds.retro85.fasta_files/
 cp scaffolds scaffolds.retro85.fasta_files/
 
-cp retro99.CRL_Step1_Passed_Elements.txt scaffolds.retro99.fasta_files/
+cp retro99.custom_script1_Passed_Elements.txt scaffolds.retro99.fasta_files/
 cp scaffolds.retrotransposons.out99 scaffolds.retro99.fasta_files/
 cp scaffolds.retrotransposons.result99 scaffolds.retro99.fasta_files/
 cp scaffolds scaffolds.retro99.fasta_files/
 
-cp TRIM99.CRL_Step1_Passed_Elements.txt scaffolds.TRIM99.fasta_files/
+cp TRIM99.custom_script1_Passed_Elements.txt scaffolds.TRIM99.fasta_files/
 cp scaffolds.TRIM.outT99 scaffolds.TRIM99.fasta_files/
 cp scaffolds.TRIM.resultT99 scaffolds.TRIM99.fasta_files/
 cp scaffolds scaffolds.TRIM99.fasta_files/
 
-cp TRIM85.CRL_Step1_Passed_Elements.txt scaffolds.TRIM85.fasta_files/
+cp TRIM85.custom_script1_Passed_Elements.txt scaffolds.TRIM85.fasta_files/
 cp scaffolds.TRIM.outT85 scaffolds.TRIM85.fasta_files/
 cp scaffolds.TRIM.resultT85 scaffolds.TRIM85.fasta_files/
 cp scaffolds scaffolds.TRIM85.fasta_files/
@@ -182,9 +182,9 @@ cp scaffolds scaffolds.TRIM85.fasta_files/
 ####Extract flanks for later alignment
 
 ```
-perl CRL_Step2.pl --step1 retro85.CRL_Step1_Passed_Elements.txt --repeatfile \
+perl custom_script2.pl --step1 retro85.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.retrotransposons.out85 --resultfile scaffolds.retrotransposons.result85  --sequencefile scaffolds \
---removed_repeats scaffolds.retro85.CRL_Step2_Passed_Elements.fasta
+--removed_repeats scaffolds.retro85.custom_script2_Passed_Elements.fasta
 
 wait
 
@@ -192,9 +192,9 @@ mv Repeat_* scaffolds.retro85.fasta_files/
 
 wait
 
-perl CRL_Step2.pl --step1 retro99.CRL_Step1_Passed_Elements.txt --repeatfile \
+perl custom_script2.pl --step1 retro99.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.retrotransposons.out99 --resultfile scaffolds.retrotransposons.result99  --sequencefile scaffolds \
---removed_repeats scaffolds.retro99.CRL_Step2_Passed_Elements.fasta
+--removed_repeats scaffolds.retro99.custom_script2_Passed_Elements.fasta
 
 wait 
 
@@ -202,9 +202,9 @@ mv Repeat* scaffolds.retro99.fasta_files/
 
 wait
 
-perl CRL_Step2.pl --step1 TRIM99.CRL_Step1_Passed_Elements.txt --repeatfile \
+perl custom_script2.pl --step1 TRIM99.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.TRIM.outT99 --resultfile scaffolds.TRIM.resultT99  --sequencefile scaffolds \
---removed_repeats scaffolds.TRIM99.CRL_Step2_Passed_Elements.fasta
+--removed_repeats scaffolds.TRIM99.custom_script2_Passed_Elements.fasta
 
 wait
 
@@ -212,9 +212,9 @@ mv Repeat* scaffolds.TRIM99.fasta_files/
 
 wait
 
-perl CRL_Step2.pl --step1 TRIM85.CRL_Step1_Passed_Elements.txt --repeatfile \
+perl custom_script2.pl --step1 TRIM85.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.TRIM.outT85 --resultfile scaffolds.TRIM.resultT85  --sequencefile scaffolds \
---removed_repeats scaffolds.TRIM85.CRL_Step2_Passed_Elements.fasta
+--removed_repeats scaffolds.TRIM85.custom_script2_Passed_Elements.fasta
 
 wait
 
@@ -229,29 +229,29 @@ cd scaffolds.retro85.fasta_files/
 
 wait
 
-perl CRL_Step3.pl --directory . --step2  \
-../scaffolds.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+perl custom_script3.pl --directory . --step2  \
+../scaffolds.retro85.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd  ../scaffolds.TRIM85.fasta_files/
 
 wait
 
-perl CRL_Step3.pl --directory . --step2  \
-../scaffolds.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+perl custom_script3.pl --directory . --step2  \
+../scaffolds.TRIM85.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd ../scaffolds.TRIM99.fasta_files/
 
 wait 
 
-perl CRL_Step3.pl --directory . --step2  \
-../scaffolds.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+perl custom_script3.pl --directory . --step2  \
+../scaffolds.TRIM99.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd scaffolds.retro99.fasta_files/
 
 wait
 
-perl CRL_Step3.pl --directory . --step2  \
-../scaffolds.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+perl custom_script3.pl --directory . --step2  \
+../scaffolds.retro99.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 ```
 
 ###Extract sequence of retrotransposons with domains
@@ -308,10 +308,10 @@ python2 reprint.tPSI.lib.py -i scaffolds.tPSI.fasta | fold -w 60 > scaffolds.tPS
 
 ###Merge libs, renaming headers in the process
 ```
-cp scaffolds.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta scaffolds.retro99.fasta
-cp scaffolds.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta scaffolds.retro85.fasta
-cp scaffolds.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta scaffolds.TRIM99.fasta
-cp scaffolds.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta scaffolds.TRIM85.fasta
+cp scaffolds.retro99.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.retro99.fasta
+cp scaffolds.retro85.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.retro85.fasta
+cp scaffolds.TRIM99.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.TRIM99.fasta
+cp scaffolds.TRIM85.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.TRIM85.fasta
 
 wait 
 
