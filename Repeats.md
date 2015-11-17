@@ -369,8 +369,9 @@ scaffolds.tPSI.classified.fasta \
 ```perl
 usearch -sortbylength scaffolds.repeats.fasta \
 --output scaffolds.repeats.srt
+```
 
-NB:Do this instead of using usearch
+NB:Do this instead of using usearch:
 
 ```
 cd-hit-est -i repeats.srt -o scaffolds.repeats.srt.nr -c 0.80 -n 5 -T 10
