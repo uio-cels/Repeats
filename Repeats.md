@@ -16,7 +16,7 @@ The pipeline is dependent on these programs:
 
 [genometools/1.5.7](http://www.genometools.org)
 
-[repeatmasker/4.0.5](http://www.repeatmasker.org/RepeatModeler.html)
+[repeatmodeler/1.0.8](http://www.repeatmasker.org/RepeatModeler.html)
 
 [blast/2.2.26](http://mirrors.vbi.vt.edu/mirrors/ftp.ncbi.nih.gov/blast/executables/release/2.2.26/)
 
@@ -39,7 +39,7 @@ The pipeline is dependent on these programs:
 
 --
 
-You will need these files to be in the directory along with the genome of study.
+And these files (currently they need to be in the same folder as the genome).
 
 [eukaryotic-tRNAs.fa](http://lowelab.ucsc.edu/GtRNAdb/download.html)
 
@@ -57,17 +57,17 @@ custom_script3.pl
 
 [filter\_protein_match.lua](https://github.com/satta/ltrsift/blob/master/filters/filter_protein_match.lua)
 
-change\_headers\_to_seqN.py
+[change\_headers\_to_seqN.py](https://github.com/uio-cels/Repeats/blob/master/scripts/change_headers_to_seqN.py)
 
-reprint.tPSI.lib.py
+[reprint.tPSI.lib.py](https://github.com/uio-cels/Repeats/blob/master/scripts/reprint.tPSI.lib.py)
 
-reprint.ltrharvest.lib.py
+[reprint.ltrharvest.lib.py](https://github.com/uio-cels/Repeats/blob/master/scripts/reprint.ltrharvest.lib.py)
 
-reprint.filtered.lib.py
+[reprint.filtered.lib.py](https://github.com/uio-cels/Repeats/blob/master/scripts/reprint.filtered.lib.py)
 
-uniprot_sprot.fasta
+[uniprot_sprot.fasta](http://www.uniprot.org/downloads)
 
-RepeatPeps.lib
+RepeatPeps.lib -- This is the library that comes with RepeatMasker/4.0.5
 
 repbase.update.lib
 
@@ -99,6 +99,7 @@ gt suffixerator -db scaffolds -indexname scaffolds -tis -suf -lcp -des -ssp -sds
 ```perl
 BuildDatabase -name scaffolds  -engine ncbi scaffolds 
 ```
+##RepARK
 
 ##RepeatModeler
 ```perl
@@ -210,37 +211,23 @@ perl custom_script2.pl --step1 retro85.custom_script1_Passed_Elements.txt --repe
 scaffolds.retrotransposons.out85 --resultfile scaffolds.retrotransposons.result85  --sequencefile scaffolds \
 --removed_repeats scaffolds.retro85.custom_script2_Passed_Elements.fasta
 
-wait
-
 mv Repeat_* scaffolds.retro85.fasta_files/
-
-wait
 
 perl custom_script2.pl --step1 retro99.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.retrotransposons.out99 --resultfile scaffolds.retrotransposons.result99  --sequencefile scaffolds \
 --removed_repeats scaffolds.retro99.custom_script2_Passed_Elements.fasta
 
-wait 
-
 mv Repeat* scaffolds.retro99.fasta_files/
-
-wait
 
 perl custom_script2.pl --step1 TRIM99.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.TRIM.outT99 --resultfile scaffolds.TRIM.resultT99  --sequencefile scaffolds \
 --removed_repeats scaffolds.TRIM99.custom_script2_Passed_Elements.fasta
 
-wait
-
 mv Repeat* scaffolds.TRIM99.fasta_files/
-
-wait
 
 perl custom_script2.pl --step1 TRIM85.custom_script1_Passed_Elements.txt --repeatfile \
 scaffolds.TRIM.outT85 --resultfile scaffolds.TRIM.resultT85  --sequencefile scaffolds \
 --removed_repeats scaffolds.TRIM85.custom_script2_Passed_Elements.fasta
-
-wait
 
 mv Repeat* scaffolds.TRIM85.fasta_files/
 ```
@@ -251,28 +238,20 @@ mv Repeat* scaffolds.TRIM85.fasta_files/
 ```perl
 cd scaffolds.retro85.fasta_files/
 
-wait
-
 perl custom_script3.pl --directory . --step2  \
 ../scaffolds.retro85.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd  ../scaffolds.TRIM85.fasta_files/
-
-wait
 
 perl custom_script3.pl --directory . --step2  \
 ../scaffolds.TRIM85.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd ../scaffolds.TRIM99.fasta_files/
 
-wait 
-
 perl custom_script3.pl --directory . --step2  \
 ../scaffolds.TRIM99.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd scaffolds.retro99.fasta_files/
-
-wait
 
 perl custom_script3.pl --directory . --step2  \
 ../scaffolds.retro99.custom_script2_Passed_Elements.fasta --pidentity 60 --seq_c 25
@@ -286,8 +265,6 @@ python2 change_headers_to_seqN.py -i scaffolds | sed 's/ //g' > scaffolds.change
 grep "ID=repeat_region" scaffolds.retrotransposons.gff85.dgt.withdomains > scaffolds.retrotransposons.gff85.dgt.withdomains.full
 grep "ID=repeat_region" scaffolds.retrotransposons.gff99.dgt.withdomains > scaffolds.retrotransposons.gff99.dgt.withdomains.full
 
-wait
-
 bedtools getfasta -fi scaffolds.changed_headers -bed scaffolds.retrotransposons.gff85.dgt.withdomains.full -fo scaffolds.retrotransposons.gff85.dgt.withdomains.full.fasta
 bedtools getfasta -fi scaffolds.changed_headers -bed scaffolds.retrotransposons.gff99.dgt.withdomains.full -fo scaffolds.retrotransposons.gff99.dgt.withdomains.full.fasta
 ```
@@ -296,29 +273,17 @@ bedtools getfasta -fi scaffolds.changed_headers -bed scaffolds.retrotransposons.
 ```perl
 cut -f 1,4,5,9 scaffolds.TPSI.allHits.chains.bestPerLocus.gff3 > tmp 
 
-wait
-
 sed 's/ID=.*Target.//g' tmp > tmp2
-
-wait
 
 sed 's/;.*//g' tmp2 | column -t > tmp3
 
 awk '{print $4}' tmp3 > tPSI.classes
 
-wait 
-
 paste tPSI.classes scaffolds.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t > tmp4
-
-wait 
 
 awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 > tmp5
 
-wait
-
 sed 's/ /\t/g' tmp5 > tmp6
-
-wait
 
 bedtools getfasta -name -fi scaffolds -bed tmp6 -fo scaffolds.tPSI.fasta
 
@@ -337,8 +302,6 @@ cp scaffolds.retro85.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.
 cp scaffolds.TRIM99.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.TRIM99.fasta
 cp scaffolds.TRIM85.fasta_files/custom_script3_Passed_Elements.fasta scaffolds.TRIM85.fasta
 
-wait 
-
 python2 reprint.ltrharvest.lib.py -i scaffolds.retro99.fasta --name retro99 --type Unknown > scaffolds.retro99.renamed.fasta
 python2 reprint.ltrharvest.lib.py -i scaffolds.retro85.fasta --name retro85 --type Unknown > scaffolds.retro85.renamed.fasta
 python2 reprint.ltrharvest.lib.py -i scaffolds.TRIM99.fasta --name TRIM99 --type TRIM > scaffolds.TRIM99.renamed.fasta
@@ -353,8 +316,6 @@ scaffolds.TRIM85.renamed.fasta \
 scaffolds.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta \
 scaffolds.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta \
 > scaffolds.retrotransposons.TRIMs.fasta
-
-wait 
 
 cat scaffolds.retrotransposons.TRIMs.fasta \
 RM*/consensi.fa.classified \
@@ -377,8 +338,6 @@ NB:Do this instead of using usearch:
 ####Remove false positives (non transposon genes)
 ```perl
 makeblastdb -in scaffolds.repeats.srt.nr -dbtype nucl 
-
-wait 
 
 blastx -query scaffolds.repeats.srt.nr \
 -db uniprot_sprot.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
@@ -411,23 +370,15 @@ cat scaffolds.repeats.only_uniprot |wc -l
 echo "Num entries hit to both"
 comm -12 scaffolds.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column scaffolds.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column |wc -l
 
-wait
-
 sed 's/\[/(/g' scaffolds.repeatlib.only_uniprot > scaffolds.repeatlib.only_uniprot.no_brackets1
 sed 's/]/)/g' scaffolds.repeatlib.only_uniprot.no_brackets1 > scaffolds.repeatlib.only_uniprot.no_brackets2
 sed 's/\[/(/g' scaffolds.repeatlib.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring > scaffolds.repeatlib.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1
 sed 's/]/)/g' scaffolds.repeatlib.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1 > scaffolds.repeatlib.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2
 
-wait 
-
 grep -f  scaffolds.repeatlib.only_uniprot.no_brackets2 scaffolds.repeatlib.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2 > scaffolds.repeatlib.only_uniprot_blast_hit.no_brackets
-
-wait
 
 sed  's/(/\[/g' scaffolds.repeatlib.only_uniprot_blast_hit.no_brackets > scaffolds.repeatlib.only_uniprot_blast_hit1
 sed  's/)/]/g' scaffolds.repeatlib.only_uniprot_blast_hit1 > scaffolds.repeatlib.only_uniprot_blast_hit
-
-wait
 
 python2 reprint.filtered.lib.py -i scaffolds.repeats.srt.nr -l scaffolds.repeats.only_uniprot | fold -w 60 > scaffolds.repeats.srt.nr.no_uniprot
 
@@ -438,11 +389,8 @@ python2 reprint.filtered.lib.py -i scaffolds.repeats.srt.nr -l scaffolds.repeats
 ```perl
 sed 's/ .*//g' scaffolds.repeats.srt.nr.no_uniprot > scaffolds.repeats.srt.nr.no_uniprot.stripped
 
-wait 
-
 cat scaffolds.repeats.srt.nr.no_uniprot.stripped repbase.update.lib > scaffolds.total.repeat.library
 
-wait 
 RepeatMasker -lib scaffolds.repeats.srt.nr.no_uniprot.stripped -a -s -pa 10 -dir scaffolds.repmask.denovo/ scaffolds
 RepeatMasker -lib scaffolds.total.repeat.library -a -s -pa 10 -dir scaffolds.repmask.total/ scaffolds
 RepeatMasker -lib repbase.update.lib -a -s -pa 10 -dir scaffolds.repmask.repbase/ scaffolds
