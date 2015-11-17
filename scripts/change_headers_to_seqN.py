@@ -1,5 +1,5 @@
 """
-NOT FINISHED, William Brynildsen
+William Brynildsen
 """
 
 from Bio import SeqIO
