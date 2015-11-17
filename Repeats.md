@@ -6,7 +6,7 @@ In short the pipeline does the following:
 * LTRdigest refines the output of LTRharvest by looking for primer binding sites and retrotransposon specific enzymes. FASTA sequences are extracted from the GFF file produced.
 * Repeats are also collected using RepeatModeler.
 * More divergent LTR retrotransposons and DNA transposons are collected using TransposonPSI. FASTA sequences are extracted from the GFF and classified according to protein homology.
-* All sequences are clustered using USEARCH.
+* All sequences are clustered using CD-HIT-EST
 * The sequences are subject to BLASTX searches against SwissProt-Uniprot and RepeatMaskers repeat peptide library. If hits occur in the uniprot database, but not the repeat peptide database the sequence is discarded.
 * RepeatMasker is run three times; only with the _de novo_ library, only with the RepBase library and once with a merged variant.
 * Finally, summaries of the RepeatMasker results are produced.
@@ -30,6 +30,8 @@ The pipeline is dependent on these programs:
 [python2/2.7.9](https://www.python.org/downloads/release/python-279/)
 
 [usearch/7.0.1090](http://www.drive5.com/usearch/download.html)
+
+[cd-hit/4.6.4](http://weizhongli-lab.org/cd-hit/)
 
 [blast+/2.2.29](http://www.ncbi.nlm.nih.gov/books/NBK279671/)
 
@@ -86,6 +88,7 @@ module load usearch/7.0.1090
 module load blast+/2.2.29
 module load repeatmasker/4.0.5
 module load bedtools/2.17.0
+module load cd-hit/4.6.4
 ```
 
 ##Indexing genome
@@ -366,6 +369,12 @@ scaffolds.tPSI.classified.fasta \
 ```perl
 usearch -sortbylength scaffolds.repeats.fasta \
 --output scaffolds.repeats.srt
+
+NB:Do this instead of using usearch
+
+```
+cd-hit-est -i repeats.srt -o scaffolds.repeats.srt.nr -c 0.80 -n 5 -T 10
+```
 
 wait
 
