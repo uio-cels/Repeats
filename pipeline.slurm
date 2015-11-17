@@ -395,7 +395,8 @@ $GENOME.repeats.only_uniprot | fold -w 60 \
 
 ##Creating a total repeat library
 
-cat $GENOME.repeats.srt.nr.no_uniprot $REPO/repbase.update.04102015.teleostei.lib > $GENOME.total.repeat.library
+cat $GENOME.repeats.srt.nr.no_uniprot $REPO/repbase.update.04102015.teleostei.lib \
+	> $GENOME.total.repeat.library
 
 #Making folders for each library
 
@@ -403,13 +404,26 @@ mkdir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
 mkdir $GENOME.total.repeat.library.repeatmasker_output
 mkdir repbase.update.04102015.teleostei.lib.repeatmasker_output
 
-RepeatMasker -lib $GENOME.repeats.srt.nr.no_uniprot -a -s -dir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/ $GENOME
-RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir $GENOME.total.repeat.library.repeatmasker_output/ $GENOME
-RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -a -s -dir repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
+RepeatMasker -lib $GENOME.repeats.srt.nr.no_uniprot -a -s -dir \
+$GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/ $GENOME
+
+RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir \
+$GENOME.total.repeat.library.repeatmasker_output/ $GENOME
+
+RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -a -s -dir \
+repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
 
 #summary.landscape.slurm
 
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out > $GENOME.repmask.denovo.summary
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.total.repeat.library.repeatmasker_output/*.out > $GENOME.repmask.total.summary
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out > $GENOME.repmask.repbase.summary
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+$GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out \
+	> $GENOME.repmask.denovo.summary
+	
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+$GENOME.total.repeat.library.repeatmasker_output/*.out \
+	> $GENOME.repmask.total.summary
+	
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out\
+	> $GENOME.repmask.repbase.summary
 
