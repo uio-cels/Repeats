@@ -374,20 +374,7 @@ usearch -sortbylength scaffolds.repeats.fasta \
 NB:Do this instead of using usearch:
 
 ```
-cd-hit-est -i repeats.srt -o scaffolds.repeats.srt.nr -c 0.80 -n 5 -T 10
-```
-
-wait
-
-usearch -cluster_fast scaffolds.repeats.srt \
---id 0.8 -centroids scaffolds.repeats.srt.consensus \
---uc scaffolds.repeats.srt.clusters.uc --consout scaffolds.repeats.srt.nr.bad_headers
-
-wait 
-
-sed 's/centroid=//g' scaffolds.repeats.srt.nr.bad_headers > scaffolds.repeats.srt.nr.bad_headers2
-sed 's/;.*//g' scaffolds.repeats.srt.nr.bad_headers2 > scaffolds.repeats.srt.nr
-
+/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est -i /work/users/willibr/ningjiang/hmms-version/repeats.srt -o repeats.srt.nr -c 0.90 -n 8 -M 3000 -T 4
 ```
 
 ####Remove false positives (non transposon genes)
