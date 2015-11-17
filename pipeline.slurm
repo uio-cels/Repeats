@@ -164,140 +164,140 @@ cd $GENOME.retro85.fasta_files/
 perl CRL_Step3.pl --directory . --step2  \
 $GENOME.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 # 
-# cd  ../$GENOME.TRIM85.fasta_files/
+cd  ../$GENOME.TRIM85.fasta_files/
+
+perl CRL_Step3.pl --directory . --step2  \
+$GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+
+cd ../$GENOME.TRIM99.fasta_files/
+
+perl CRL_Step3.pl --directory . --step2  \
+$GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+
+cd $GENOME.retro99.fasta_files/
+
+perl CRL_Step3.pl --directory . --step2  \
+$GENOME.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 # 
-# perl CRL_Step3.pl --directory . --step2  \
-# $GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+# # #extractSeq.retro_withdomains.slurm
+cd ..
+python2 $REPO/change_headers_to_seqN.py -i $GENOME | sed 's/ //g' > $GENOME.changed_headers
+
+grep "ID=repeat_region" $GENOME.retrotransposons.gff85.dgt.withdomains > $GENOME.retrotransposons.gff85.dgt.withdomains.full
+grep "ID=repeat_region" $GENOME.retrotransposons.gff99.dgt.withdomains > $GENOME.retrotransposons.gff99.dgt.withdomains.full
+
+bedtools getfasta -fi $GENOME.changed_headers -bed $GENOME.retrotransposons.gff85.dgt.withdomains.full -fo $GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta
+bedtools getfasta -fi $GENOME.changed_headers -bed $GENOME.retrotransposons.gff99.dgt.withdomains.full -fo $GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta
+
+# # #extractSeq.tPSI.slurm
+
+cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | sed 's/;.*//g' | column -t | awk '{print $4}' > tPSI.classes
+
+paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t > tmp4
+
+awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 > tmp5
+
+sed 's/ /\t/g' tmp5 > tmp6
+
+bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
+
+# #classify.tPSI.slurm
+python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 > $GENOME.tPSI.classified.fasta
 # 
-# cd ../$GENOME.TRIM99.fasta_files/
+# # #catlibs.slurm
+
+cp $GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro99.fasta
+cp $GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro85.fasta
+cp $GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM99.fasta
+cp $GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM85.fasta
+
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro99.fasta --name retro99 --type Unknown > $GENOME.retro99.renamed.fasta
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro85.fasta --name retro85 --type Unknown > $GENOME.retro85.renamed.fasta
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM99.fasta --name TRIM99 --type TRIM > $GENOME.TRIM99.renamed.fasta
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM85.fasta --name TRIM85 --type TRIM > $GENOME.TRIM85.renamed.fasta
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta --name retro99withdomains --type Unknown > $GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta
+python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta --name retro85withdomains --type Unknown > $GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta
 # 
-# perl CRL_Step3.pl --directory . --step2  \
-# $GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+cat $GENOME.retro99.renamed.fasta \
+$GENOME.retro85.renamed.fasta \
+$GENOME.TRIM99.renamed.fasta \
+$GENOME.TRIM85.renamed.fasta \
+$GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta \
+$GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta \
+> $GENOME.retrotransposons.TRIMs.fasta
+cd RM*
+sed 's/ .*//g' consensi.fa.classified > consensi.fa.classified.stripped
+cd ..
+cat $GENOME.retrotransposons.TRIMs.fasta \
+RM*/consensi.fa.classified.stripped \
+$GENOME.tPSI.classified.fasta | fold -w 60 > $GENOME.repeats.fasta
+
+# #cluster.slurm
+
+$CD-HIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr
+
+#blastx.slurm
+makeblastdb -in $GENOME.repeats.srt.nr -dbtype nucl 
+
+blastx -query $GENOME.repeats.srt.nr \
+-db $REPO/uniprot_sprot.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
+-outfmt 6 -out $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50
+
+blastx -query  $GENOME.repeats.srt.nr \
+-db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
+-outfmt 6 -out $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50
+
+sort -k1,1 -k12,12nr -k11,11n \
+$GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50 | sort -u -k1,1 \
+--merge > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring
+
+sort -k1,1 -k12,12nr -k11,11n \
+$GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50 | sort -u -k1,1 \
+--merge > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring
+
+cut -f 1 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring \
+> $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column
+
+cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
+> $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
+
+echo "Num entries only hit to RepeatPeps" 
+comm -13  $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column > $GENOME.repeats.only_repeatpeps
+cat $GENOME.repeats.only_repeatpeps |wc -l
+echo "Num entries only hit to UniProt"
+comm -23 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column > $GENOME.repeats.only_uniprot
+cat $GENOME.repeats.only_uniprot |wc -l
+echo "Num entries hit to both"
+comm -12 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column |wc -l
+
+# sed 's/\[/(/g' $GENOME.repeats.only_uniprot > $GENOME.repeatlib.only_uniprot.no_brackets1
+# sed 's/]/)/g' $GENOME.repeats.only_uniprot.no_brackets1 > $GENOME.repeats.only_uniprot.no_brackets2
+# sed 's/\[/(/g' $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1
+# sed 's/]/)/g' $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1 > $GENOME.repeatssrt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2
 # 
-# cd $GENOME.retro99.fasta_files/
+# grep -f  $GENOME.repeats.only_uniprot.no_brackets2 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2 > $GENOME.repeats.only_uniprot_blast_hit.no_brackets
 # 
-# perl CRL_Step3.pl --directory . --step2  \
-# $GENOME.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
-# # 
-# # # #extractSeq.retro_withdomains.slurm
-# cd ..
-# python2 $REPO/change_headers_to_seqN.py -i $GENOME | sed 's/ //g' > $GENOME.changed_headers
-# 
-# grep "ID=repeat_region" $GENOME.retrotransposons.gff85.dgt.withdomains > $GENOME.retrotransposons.gff85.dgt.withdomains.full
-# grep "ID=repeat_region" $GENOME.retrotransposons.gff99.dgt.withdomains > $GENOME.retrotransposons.gff99.dgt.withdomains.full
-# 
-# bedtools getfasta -fi $GENOME.changed_headers -bed $GENOME.retrotransposons.gff85.dgt.withdomains.full -fo $GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta
-# bedtools getfasta -fi $GENOME.changed_headers -bed $GENOME.retrotransposons.gff99.dgt.withdomains.full -fo $GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta
-# 
-# # # #extractSeq.tPSI.slurm
-# 
-# cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | sed 's/;.*//g' | column -t | awk '{print $4}' > tPSI.classes
-# 
-# paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t > tmp4
-# 
-# awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 > tmp5
-# 
-# sed 's/ /\t/g' tmp5 > tmp6
-# 
-# bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
-# 
-# # #classify.tPSI.slurm
-# python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 > $GENOME.tPSI.classified.fasta
-# # 
-# # # #catlibs.slurm
-# 
-# cp $GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro99.fasta
-# cp $GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro85.fasta
-# cp $GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM99.fasta
-# cp $GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM85.fasta
-# 
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro99.fasta --name retro99 --type Unknown > $GENOME.retro99.renamed.fasta
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro85.fasta --name retro85 --type Unknown > $GENOME.retro85.renamed.fasta
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM99.fasta --name TRIM99 --type TRIM > $GENOME.TRIM99.renamed.fasta
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM85.fasta --name TRIM85 --type TRIM > $GENOME.TRIM85.renamed.fasta
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta --name retro99withdomains --type Unknown > $GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta
-# python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta --name retro85withdomains --type Unknown > $GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta
-# # 
-# cat $GENOME.retro99.renamed.fasta \
-# $GENOME.retro85.renamed.fasta \
-# $GENOME.TRIM99.renamed.fasta \
-# $GENOME.TRIM85.renamed.fasta \
-# $GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta \
-# $GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta \
-# > $GENOME.retrotransposons.TRIMs.fasta
-# cd RM*
-# sed 's/ .*//g' consensi.fa.classified > consensi.fa.classified.stripped
-# cd ..
-# cat $GENOME.retrotransposons.TRIMs.fasta \
-# RM*/consensi.fa.classified.stripped \
-# $GENOME.tPSI.classified.fasta | fold -w 60 > $GENOME.repeats.fasta
-# 
-# # #cluster.slurm
-# 
-# $CD-HIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr
-# 
-# #blastx.slurm
-# makeblastdb -in $GENOME.repeats.srt.nr -dbtype nucl 
-# 
-# blastx -query $GENOME.repeats.srt.nr \
-# -db $REPO/uniprot_sprot.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
-# -outfmt 6 -out $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50
-# 
-# blastx -query  $GENOME.repeats.srt.nr \
-# -db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
-# -outfmt 6 -out $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50
-# 
-# sort -k1,1 -k12,12nr -k11,11n \
-# $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50 | sort -u -k1,1 \
-# --merge > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring
-# 
-# sort -k1,1 -k12,12nr -k11,11n \
-# $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50 | sort -u -k1,1 \
-# --merge > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring
-# 
-# cut -f 1 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring \
-# > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column
-# 
-# cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
-# > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
-# 
-# echo "Num entries only hit to RepeatPeps" 
-# comm -13  $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column > $GENOME.repeats.only_repeatpeps
-# cat $GENOME.repeats.only_repeatpeps |wc -l
-# echo "Num entries only hit to UniProt"
-# comm -23 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column > $GENOME.repeats.only_uniprot
-# cat $GENOME.repeats.only_uniprot |wc -l
-# echo "Num entries hit to both"
-# comm -12 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column |wc -l
-# 
-# # sed 's/\[/(/g' $GENOME.repeats.only_uniprot > $GENOME.repeatlib.only_uniprot.no_brackets1
-# # sed 's/]/)/g' $GENOME.repeats.only_uniprot.no_brackets1 > $GENOME.repeats.only_uniprot.no_brackets2
-# # sed 's/\[/(/g' $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1
-# # sed 's/]/)/g' $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets1 > $GENOME.repeatssrt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2
-# # 
-# # grep -f  $GENOME.repeats.only_uniprot.no_brackets2 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring.no_brackets2 > $GENOME.repeats.only_uniprot_blast_hit.no_brackets
-# # 
-# # sed  's/(/\[/g' $GENOME.repeats.only_uniprot_blast_hit.no_brackets > $GENOME.repeats.only_uniprot_blast_hit1
-# # sed  's/)/]/g' $GENOME.repeats.only_uniprot_blast_hit1 > $GENOME.repeats.only_uniprot_blast_hit
-# 
-# python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l $GENOME.repeats.only_uniprot | fold -w 60 > $GENOME.repeats.srt.nr.no_uniprot
-# 
-# # # # #repmask.slurm
-# # # # 
-# # # # 
-# # cat $GENOME.repeats.srt.nr.no_uniprot repbase.update.04102015.teleostei.lib > $GENOME.total.repeat.library
-# # 
-# # mkdir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
-# # mkdir $GENOME.total.repeat.library.repeatmasker_output
-# # mkdir repbase.update.04102015.teleostei.lib.repeatmasker_output
-# # 
-# # RepeatMasker -lib $GENOME.repeats.srt.nr.no_uniprot -a -s -dir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/ $GENOME
-# # RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir $GENOME.total.repeat.library.repeatmasker_output/ $GENOME
-# # RepeatMasker -lib repbase.update.04102015.teleostei.lib -a -s -dir repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
-# # 
-# # #summary.landscape.slurm
-# # 
-# # /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out > $GENOME.repmask.denovo.summary
-# # /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.total.repeat.library.repeatmasker_output/*.out > $GENOME.repmask.total.summary
-# # /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out > $GENOME.repmask.repbase.summary
-# # 
+# sed  's/(/\[/g' $GENOME.repeats.only_uniprot_blast_hit.no_brackets > $GENOME.repeats.only_uniprot_blast_hit1
+# sed  's/)/]/g' $GENOME.repeats.only_uniprot_blast_hit1 > $GENOME.repeats.only_uniprot_blast_hit
+
+python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l $GENOME.repeats.only_uniprot | fold -w 60 > $GENOME.repeats.srt.nr.no_uniprot
+
+# # # #repmask.slurm
+# # # 
+# # # 
+cat $GENOME.repeats.srt.nr.no_uniprot repbase.update.04102015.teleostei.lib > $GENOME.total.repeat.library
+
+mkdir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
+mkdir $GENOME.total.repeat.library.repeatmasker_output
+mkdir repbase.update.04102015.teleostei.lib.repeatmasker_output
+
+RepeatMasker -lib $GENOME.repeats.srt.nr.no_uniprot -a -s -dir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/ $GENOME
+RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir $GENOME.total.repeat.library.repeatmasker_output/ $GENOME
+RepeatMasker -lib repbase.update.04102015.teleostei.lib -a -s -dir repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
+
+#summary.landscape.slurm
+
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out > $GENOME.repmask.denovo.summary
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei $GENOME.total.repeat.library.repeatmasker_output/*.out > $GENOME.repmask.total.summary
+/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out > $GENOME.repmask.repbase.summary
+
