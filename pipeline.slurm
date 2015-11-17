@@ -219,15 +219,12 @@ $GENOME.TRIM.outT85 --resultfile $GENOME.TRIM.resultT85  --sequencefile $GENOME 
 mv Repeat_* $GENOME.TRIM85.fasta_files/
 
 ##Here, part III of the custom scripts need to wait until all Repeat_* files are moved,
-# so I add a little nap. But I need a better solution.
-
-sleep 60
+# 
 
 cd $GENOME.retro85.fasta_files/
 
 perl CRL_Step3.pl --directory . --step2  \
 $GENOME.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
-
 
 cd  ../$GENOME.TRIM85.fasta_files/
 
@@ -368,7 +365,7 @@ cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
 > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
 
 echo "Num entries only hit to RepeatPeps" 
-comm -13  $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column 
+comm -13 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column 
 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
 	> $GENOME.repeats.only_repeatpeps
 	
