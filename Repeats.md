@@ -11,9 +11,6 @@ In short the pipeline does the following:
 * RepeatMasker is run three times; only with the _de novo_ library, only with the RepBase library and once with a merged variant.
 * Finally, summaries of the RepeatMasker results are produced.
 
-Flowchart:
-![alt text](https://github.com/uio-cees/willibr-TE-pipeline/blob/master/repeatspipeline.png)
-
 
 The pipeline is dependent on these programs:
 
@@ -44,35 +41,35 @@ The pipeline is dependent on these programs:
 
 You will need these files to be in the directory along with the genome of study.
 
->eukaryotic-tRNAs.fa
->
->retro99.custom_script1.pl
->
->retro85.custom_script1.pl
->
->TRIM85.custom_script1.pl
->
->TRIM99.custom_script1.pl
->
->custom_script2.pl
->
->filter\_protein_match.lua
->
->custom_script3.pl
->
->change\_headers\_to_seqN.py
->
->reprint.tPSI.lib.py
->
->reprint.ltrharvest.lib.py
->
->reprint.filtered.lib.py
+[eukaryotic-tRNAs.fa](http://lowelab.ucsc.edu/GtRNAdb/download.html)
 
->uniprot_sprot.fasta
+retro99.custom_script1.pl
 
->RepeatPeps.lib
+retro85.custom_script1.pl
 
->repbase.update.lib
+TRIM85.custom_script1.pl
+
+TRIM99.custom_script1.pl
+
+custom_script2.pl
+
+custom_script3.pl
+
+[filter\_protein_match.lua](https://github.com/satta/ltrsift/blob/master/filters/filter_protein_match.lua)
+
+change\_headers\_to_seqN.py
+
+reprint.tPSI.lib.py
+
+reprint.ltrharvest.lib.py
+
+reprint.filtered.lib.py
+
+uniprot_sprot.fasta
+
+RepeatPeps.lib
+
+repbase.update.lib
 
 ####Load necessary modules
 
