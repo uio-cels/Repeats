@@ -52,7 +52,7 @@ BuildDatabase -name $GENOME  -engine ncbi $GENOME
 
 #-----------------------------------RepeatModeler----------------------------------------#
 
-RepeatModeler -database $GENOME -engine ncbi -pa 10
+RepeatModeler -database $GENOME -engine ncbi
 
 #Create indexes for BLASTX
 
@@ -221,26 +221,30 @@ mv Repeat_* $GENOME.TRIM85.fasta_files/
 ##Here, part III of the custom scripts need to wait until all Repeat_* files are moved,
 # 
 
+cp $GENOME.retro85.CRL_Step2_Passed_Elements.fasta $GENOME.retro85.fasta_files/
+cp $GENOME.retro99.CRL_Step2_Passed_Elements.fasta $GENOME.retro99.fasta_files/
+cp $GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta $GENOME.TRIM85.fasta_files/
+cp $GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta $GENOME.TRIM99.fasta_files/
+
 cd $GENOME.retro85.fasta_files/
 
-perl CRL_Step3.pl --directory . --step2  \
+perl CRL_Step3.pl --directory . --step2 \
 $GENOME.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
-cd  ../$GENOME.TRIM85.fasta_files/
+cd $GENOME.TRIM85.fasta_files/
 
-perl CRL_Step3.pl --directory . --step2  \
+perl CRL_Step3.pl --directory . --step2 \
 $GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
-cd ../$GENOME.TRIM99.fasta_files/
+cd $GENOME.TRIM99.fasta_files/
 
-perl CRL_Step3.pl --directory . --step2  \
+perl CRL_Step3.pl --directory . --step2 \
 $GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
 cd $GENOME.retro99.fasta_files/
 
-perl CRL_Step3.pl --directory . --step2  \
+perl CRL_Step3.pl --directory . --step2 \
 $GENOME.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
-
 
 #Changing the headers of the genome FASTA file before extraction
 
@@ -365,9 +369,9 @@ cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
 > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
 
 echo "Num entries only hit to RepeatPeps" 
-comm -13 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column 
+comm -13 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
-	> $GENOME.repeats.only_repeatpeps
+> $GENOME.repeats.only_repeatpeps
 	
 cat $GENOME.repeats.only_repeatpeps |wc -l
 
@@ -375,7 +379,7 @@ echo "Num entries only hit to UniProt"
 
 comm -23 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
-	> $GENOME.repeats.only_uniprot
+> $GENOME.repeats.only_uniprot
 	
 cat $GENOME.repeats.only_uniprot |wc -l
 
@@ -386,14 +390,14 @@ $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column | wc -l
 
 python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l \
 $GENOME.repeats.only_uniprot | fold -w 60 \
-	> $GENOME.repeats.srt.nr.no_uniprot
+> $GENOME.repeats.srt.nr.no_uniprot
 
 #-----------------------------------------RepeatMasker-----------------------------------#
 
 ##Creating a total repeat library
 
 cat $GENOME.repeats.srt.nr.no_uniprot $REPO/repbase.update.04102015.teleostei.lib \
-	> $GENOME.total.repeat.library
+> $GENOME.total.repeat.library
 
 #Making folders for each library
 
