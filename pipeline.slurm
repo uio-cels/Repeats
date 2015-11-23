@@ -13,22 +13,15 @@ fi
 #SBATCH --mail-user=williambrynildsen@gmail.com
 #SBATCH --mail-type=ALL
 
-#Genome headers must not contain any special characters (only letters and/or numbers).
+#NB! Genome headers must not contain any special characters (only letters and/or numbers).
 
+#
 export REPO=/work/users/willibr/testing/repository
-export GENOME=/work/users/willibr/testing/c.elegans/yeast.fa
+export GENOME=$1
 export tPSI=/projects/cees/bin/TransposonPSI/transposonPSI.pl
 export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
 
-#$REPO/eukaryotic-tRNAs.fa
-#$REPO/TRIM99.CRL_Step1.pl
-#$REPO/TRIM85.CRL_Step1.pl
-#$REPOretro99.CRL_Step1.pl
-#$REPO/retro85.CRL_Step1.pl
-#$REPO/CRL_Step2.pl
-#$REPO/CRL_Step3.pl
-#$REPO/filter_protein_match.lua
-#$REPO/uniprot_sprot.fasta
+#Loading modules
 
 module load genometools/1.5.7 
 module load repeatmodeler/1.0.8
@@ -43,98 +36,10 @@ module load repeatmasker/4.0.5
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
-#-------------------------------------Indexing-------------------------------------------#
-
-#Create indexes for LTRharvest/LTRdigest
-gt suffixerator -db $GENOME -indexname $GENOME -tis -suf -lcp -des -ssp -sds -dna
-#Create index for RepeatModeler
-BuildDatabase -name $GENOME  -engine ncbi $GENOME 
-
-#-----------------------------------RepeatModeler----------------------------------------#
-
-RepeatModeler -database $GENOME -engine ncbi
-
-#Create indexes for BLASTX
-
-makeblastdb -in $REPO/uniprot_sprot.fasta -dbtype prot
-makeblastdb -in $REPO/RepeatPeps.lib -dbtype prot
-
-#------------------------------------TransposonPSI---------------------------------------#
-
-perl $tPSI $GENOME nuc >tPSI.log
- 
-#-------------------------------------LTRharvest-----------------------------------------#
-
-##Detecting putative LTR retrotransposons with:
-#	a minimum length of 100 bp
-#	a maximum length of 6000 bp
-#	99% similar long terminal repeats
-#	An intact TG..CA motif
-
-gt ltrharvest -index $GENOME -out $GENOME.retrotransposons.out99 \
--outinner $GENOME.retrotransposons.outinner99 -gff3 $GENOME.retrotransposons.gff99 \
--minlenltr 100 -maxlenltr 6000 -mindistltr 1500 -maxdistltr 25000 -mintsd 5 -maxtsd 5 \
--motif tgca -similar 99 -vic 10 \
-	> $GENOME.retrotransposons.result99
-
-##Detecting putative LTR retrotransposons with:
-#	a minimum length of 1500 bp
-#	a maximum length of 25000 bp
-#	85% similar long terminal repeats
-
-gt ltrharvest -index $GENOME -out $GENOME.retrotransposons.out85 \
--outinner $GENOME.retrotransposons.outinner85 -gff3 $GENOME.retrotransposons.gff85 \
--minlenltr 100 -maxlenltr 6000 \
--mindistltr 1500 -maxdistltr 25000 -mintsd 5 -maxtsd 5 -vic 10 \
-	> $GENOME.retrotransposons.result85
-
-##Detecting putative terminal-repeat retrotransposons in miniature (TRIM) with:
-#	a minimum length of 280
-#	a maximum length of 1500
-#	99% similar long terminal repeats
-
-gt ltrharvest -index $GENOME -out $GENOME.TRIM.outT99 -outinner \
-$GENOME.TRIM.outinnerT99 -gff3 $GENOME.TRIM.gffT99 -minlenltr 70 -maxlenltr 500 \
--mindistltr 280 -maxdistltr 1500 -mintsd 5 -maxtsd 5 -motif tgca -similar 99 -vic 10 \
-	> $GENOME.TRIM.resultT99
-
-##Detecting putative terminal-repeat retrotransposons in miniature (TRIM) with:
-#	a minimum length of 280
-#	a maximum length of 1500
-#	85% similar long terminal repeats
-
-gt ltrharvest -index $GENOME -out $GENOME.TRIM.outT85 -outinner \
-$GENOME.TRIM.outinnerT85 -gff3 $GENOME.TRIM.gffT85 -minlenltr 70 -maxlenltr 500 \
--mindistltr 280 -maxdistltr 1500 -mintsd 5 -maxtsd 5 -vic 10 \
-	> $GENOME.TRIM.resultT85
-
-#-------------------------------------LTRdigest------------------------------------------#
-
-#Preparing the GFF files for LTRdigest
-
-gt gff3 -sort $GENOME.retrotransposons.gff99 > $GENOME.retrotransposons.gff99.sort
-gt gff3 -sort $GENOME.retrotransposons.gff85 > $GENOME.retrotransposons.gff85.sort
-gt gff3 -sort $GENOME.TRIM.gffT85 > $GENOME.TRIM.gffT85.sort
-gt gff3 -sort $GENOME.TRIM.gffT99 > $GENOME.TRIM.gffT99.sort 
-
-##Running LTRdigest, detecting elements with a primer binding site and retrotransposon
-# specific enzymes for each harvested group
-
-gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
-$GENOME.retrotransposons.gff99.sort \
-$GENOME > $GENOME.retrotransposons.gff99.dgt
-
-gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
-$GENOME.retrotransposons.gff85.sort \
-$GENOME > $GENOME.retrotransposons.gff85.dgt 
-
-gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
-$GENOME.TRIM.gffT85.sort \
-$GENOME > $GENOME.TRIM.gffT85.dgt 
-
-gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
-$GENOME.TRIM.gffT99.sort \
-$GENOME > $GENOME.TRIM.gffT99.dgt 
+sh part_of_pipeline_ltrharvest.sh $GENOME &
+sh part_of_pipeline_tPSI.sh $GENOME &
+sh part_of_pipeline_repmod.sh $GENOME &
+wait
 
 #------------------------------Filtration and extraction---------------------------------#
 ##Running custom scripts provided by Ning Jiang (she will publish them soon) to filter
@@ -218,8 +123,7 @@ $GENOME.TRIM.outT85 --resultfile $GENOME.TRIM.resultT85  --sequencefile $GENOME 
  
 mv Repeat_* $GENOME.TRIM85.fasta_files/
 
-##Here, part III of the custom scripts need to wait until all Repeat_* files are moved,
-# 
+#Copying files before running part III
 
 cp $GENOME.retro85.CRL_Step2_Passed_Elements.fasta $GENOME.retro85.fasta_files/
 cp $GENOME.retro99.CRL_Step2_Passed_Elements.fasta $GENOME.retro99.fasta_files/
@@ -229,19 +133,19 @@ cp $GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta $GENOME.TRIM99.fasta_files/
 cd $GENOME.retro85.fasta_files/
 
 perl CRL_Step3.pl --directory . --step2 \
-$GENOME.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+$GENOME.retro85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25 
 
-cd $GENOME.TRIM85.fasta_files/
-
-perl CRL_Step3.pl --directory . --step2 \
-$GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
-
-cd $GENOME.TRIM99.fasta_files/
+cd ../$GENOME.TRIM85.fasta_files/
 
 perl CRL_Step3.pl --directory . --step2 \
-$GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
+$GENOME.TRIM85.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25 
 
-cd $GENOME.retro99.fasta_files/
+cd ../$GENOME.TRIM99.fasta_files/
+
+perl CRL_Step3.pl --directory . --step2 \
+$GENOME.TRIM99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25 
+
+cd ../$GENOME.retro99.fasta_files/
 
 perl CRL_Step3.pl --directory . --step2 \
 $GENOME.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
