@@ -36,9 +36,9 @@ module load repeatmasker/4.0.5
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
-sh part_of_pipeline_ltrharvest.sh $GENOME &
-sh part_of_pipeline_tPSI.sh $GENOME &
-sh part_of_pipeline_repmod.sh $GENOME &
+sh slave_LTRharvest.slurm $GENOME &
+sh slave_tPSI.slurm $GENOME &
+sh slave_RepeatModeler.slurm $GENOME &
 wait
 
 #------------------------------Filtration and extraction---------------------------------#
