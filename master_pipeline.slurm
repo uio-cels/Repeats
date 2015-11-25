@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --job-name=pipeline
 #SBATCH --account=nn9244k
-#SBATCH --time=0:30:0
+#SBATCH --time=1:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=1
 
@@ -13,9 +13,9 @@ fi
 #SBATCH --mail-user=williambrynildsen@gmail.com
 #SBATCH --mail-type=ALL
 
-#NB! Genome headers must not contain any special characters (only letters and/or numbers).
+#NB! Genome FASTA headers must not contain any special characters (only letters and/or 
+#numbers).
 
-#
 export REPO=/work/users/willibr/testing/repository
 export GENOME=$1
 export tPSI=/projects/cees/bin/TransposonPSI/transposonPSI.pl
@@ -36,6 +36,7 @@ module load repeatmasker/4.0.5
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
+#Starting long jobs in separate scripts.
 sh slave_LTRharvest.slurm $GENOME &
 sh slave_tPSI.slurm $GENOME &
 sh slave_RepeatModeler.slurm $GENOME &
@@ -61,7 +62,7 @@ gt select -rule_files $REPO/filter_protein_match.lua -- \
 	> $GENOME.retrotransposons.gff85.dgt.withdomains
 
 ##Continuing running scripts provided by Ning Jiang.
-#
+
 #First, creating folders
 mkdir $GENOME.TRIM85.fasta_files
 mkdir $GENOME.TRIM99.fasta_files
@@ -150,9 +151,238 @@ cd ../$GENOME.retro99.fasta_files/
 perl CRL_Step3.pl --directory . --step2 \
 $GENOME.retro99.CRL_Step2_Passed_Elements.fasta --pidentity 60 --seq_c 25
 
-#Changing the headers of the genome FASTA file before extraction
+#Preparing for part IV
 
 cd ..
+
+mkdir retro85
+mkdir retro99
+mkdir TRIM99
+mkdir TRIM85
+
+cd retro85
+
+perl $REPO/ltr_library.pl --resultfile ../$GENOME.retrotransposons.result85 \
+--step3 ../$GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--sequencefile ../$GENOME
+
+cp lLTR_Only.lib $GENOME.retro85.lLTR_Only.lib
+
+cd ../retro99
+
+perl $REPO/ltr_library.pl --resultfile ../$GENOME.retrotransposons.result99 \
+--step3 ../$GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--sequencefile ../$GENOME
+
+cp lLTR_Only.lib $GENOME.retro99.lLTR_Only.lib
+
+cd ../TRIM85
+
+perl $REPO/ltr_library.pl --resultfile ../$GENOME.TRIM.resultT85 \
+--step3 ../$GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--sequencefile ../$GENOME
+
+cp lLTR_Only.lib $GENOME.TRIM85.lLTR_Only.lib
+
+cd ../TRIM99
+
+perl $REPO/ltr_library.pl --resultfile ../$GENOME.TRIM.resultT99 \
+--step3 ../$GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--sequencefile ../$GENOME
+
+cp lLTR_Only.lib $GENOME.TRIM99.lLTR_Only.lib
+
+cd ..
+
+cat retro85/$GENOME.retro85.lLTR_Only.lib $REPO/TEseeker.DNAtransposons.fasta \
+	> retro85/$GENOME.repeats_to_mask_LTR85.fasta
+
+cat retro99/$GENOME.retro99.lLTR_Only.lib $REPO/TEseeker.DNAtransposons.fasta \
+	> retro99/$GENOME.repeats_to_mask_LTR99.fasta
+
+cat TRIM85/$GENOME.TRIM85.lLTR_Only.lib $REPO/TEseeker.DNAtransposons.fasta \
+	> TRIM85/$GENOME.repeats_to_mask_TRIM85.fasta
+	
+cat TRIM99/$GENOME.TRIM99.lLTR_Only.lib $REPO/TEseeker.DNAtransposons.fasta \
+	> TRIM99/$GENOME.repeats_to_mask_TRIM99.fasta
+	
+#Repeatmasking a bit
+
+RepeatMasker -lib retro85/$GENOME.repeats_to_mask_LTR85.fasta -nolow -no_is \
+-dir . $GENOME.retrotransposons.outinner85 
+
+RepeatMasker -lib retro99/$GENOME.repeats_to_mask_LTR99.fasta -nolow -no_is \
+-dir . $GENOME.retrotransposons.outinner99
+
+RepeatMasker -lib TRIM85/$GENOME.repeats_to_mask_TRIM85.fasta -nolow -no_is \
+-dir . $GENOME.TRIM.outinnerT85
+
+RepeatMasker -lib TRIM99/$GENOME.repeats_to_mask_TRIM99.fasta -nolow -no_is \
+-dir . $GENOME.TRIM.outinnerT99
+
+#Step 4
+MASKED1=$GENOME.retrotransposons.outinner85.masked
+MASKED2=$GENOME.retrotransposons.outinner99.masked
+MASKED3=$GENOME.TRIM.outinnerT85.masked
+MASKED3=$GENOME.TRIM.outinnerT99.masked
+
+cd retro85
+
+if [ -f "$MASKED1" ];
+then
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.retrotransposons.result85 --innerfile \
+	../$GENOME.retrotransposons.outinner85.masked --sequencefile ../$GENOME
+else
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.retrotransposons.result85 --innerfile \
+	../$GENOME.retrotransposons.outinner85 --sequencefile ../$GENOME
+fi
+
+cd ../retro99
+
+if [ -f "$MASKED2" ];
+then
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.retrotransposons.result99 --innerfile \
+	../$GENOME.retrotransposons.outinner99.masked --sequencefile ../$GENOME
+else
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.retrotransposons.result99 --innerfile \
+	../$GENOME.retrotransposons.outinner99 --sequencefile ../$GENOME
+fi
+
+cd ../TRIM99
+
+if [ -f "$MASKED3" ];
+then
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.TRIM.resultT99 --innerfile \
+	../$GENOME.TRIM.outinnerT99.masked --sequencefile ../$GENOME
+else
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.TRIM.resultT99 --innerfile \
+	../$GENOME.TRIM.outinnerT99 --sequencefile ../$GENOME
+fi
+
+cd ../TRIM85
+
+if [ -f "$MASKED4" ];
+then
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.TRIM.resultT85 --innerfile \
+	../$GENOME.TRIM.outinnerT85.masked --sequencefile ../$GENOME
+else
+	perl $REPO/CRL_Step4.pl --step3 \
+	../$GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+	--resultfile ../$GENOME.TRIM.resultT85 --innerfile \
+	../$GENOME.TRIM.outinnerT85 --sequencefile ../$GENOME
+fi
+
+cd ..
+
+module load blast+/2.2.29
+
+makeblastdb -in retro85/lLTRs_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in retro85/Inner_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in retro99/lLTRs_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in retro99/Inner_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in TRIM85/lLTRs_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in TRIM85/Inner_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in TRIM99/lLTRs_Seq_For_BLAST.fasta -dbtype nucl
+makeblastdb -in TRIM99/Inner_Seq_For_BLAST.fasta -dbtype nucl
+
+blastn -query retro85/lLTRs_Seq_For_BLAST.fasta -db retro85/lLTRs_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out retro85/lLTRs_Seq_For_BLAST.fasta.out
+
+blastn -query retro85/Inner_Seq_For_BLAST.fasta -db retro85/Inner_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out retro85/Inner_Seq_For_BLAST.fasta.out
+
+blastn -query retro99/lLTRs_Seq_For_BLAST.fasta -db retro99/lLTRs_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out retro99/lLTRs_Seq_For_BLAST.fasta.out
+
+blastn -query retro99/Inner_Seq_For_BLAST.fasta -db retro99/Inner_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out retro99/Inner_Seq_For_BLAST.fasta.out
+
+blastn -query TRIM85/lLTRs_Seq_For_BLAST.fasta -db TRIM85/lLTRs_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out TRIM85/lLTRs_Seq_For_BLAST.fasta.out
+
+blastn -query TRIM85/Inner_Seq_For_BLAST.fasta -db TRIM85/Inner_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out TRIM85/Inner_Seq_For_BLAST.fasta.out
+
+blastn -query TRIM99/lLTRs_Seq_For_BLAST.fasta -db TRIM99/lLTRs_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out TRIM99/lLTRs_Seq_For_BLAST.fasta.out
+
+blastn -query TRIM99/Inner_Seq_For_BLAST.fasta -db TRIM99/Inner_Seq_For_BLAST.fasta \
+-evalue 1e-10 -num_descriptions 1000 -out TRIM99/Inner_Seq_For_BLAST.fasta.out
+
+
+#STEP 5
+
+perl $REPO/CRL_Step5.pl --LTR_blast retro85/lLTRs_Seq_For_BLAST.fasta.out \
+--inner_blast retro85/Inner_Seq_For_BLAST.fasta.out \
+--step3 $GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--final $GENOME.retro85.lib
+
+perl $REPO/CRL_Step5.pl --LTR_blast retro99/lLTRs_Seq_For_BLAST.fasta.out \
+--inner_blast retro99/Inner_Seq_For_BLAST.fasta.out \
+--step3 $GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--final $GENOME.retro99.lib
+
+perl $REPO/CRL_Step5.pl --LTR_blast TRIM85/lLTRs_Seq_For_BLAST.fasta.out \
+--inner_blast TRIM85/Inner_Seq_For_BLAST.fasta.out \
+--step3 $GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--final $GENOME.TRIM85.lib
+
+perl $REPO/CRL_Step5.pl --LTR_blast TRIM99/lLTRs_Seq_For_BLAST.fasta.out \
+--inner_blast TRIM99/Inner_Seq_For_BLAST.fasta.out \
+--step3 $GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta \
+--final $GENOME.TRIM99.lib
+
+#Renaming headers in each library:
+
+python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.retro85.lib \
+--name retrotransposon85 > $GENOME.retro85.renamed.lib
+
+python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.retro99.lib \
+--name retrotransposon99 > $GENOME.retro99.renamed.lib 
+
+python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.TRIM85.lib \
+--name TRIM85 > $GENOME.TRIM85.renamed.lib 
+
+python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.TRIM99.lib \
+--name TRIM99 > $GENOME.TRIM99.renamed.lib
+
+#Merging each group
+
+cat $GENOME.TRIM99.renamed.lib $GENOME.TRIM85.renamed.lib $GENOME.retro99.renamed.lib \
+$GENOME.retro85.renamed.lib \
+	> $GENOME.retrotransposons.TRIMs.lib
+
+#Trying to classify the consensus sequences using RepeatClassifier
+
+RepeatClassifier -consensi $GENOME.retrotransposons.TRIMs.lib -engine ncbi
+
+#Output is $GENOME.retrotransposons.TRIMs.lib.classified.
+#Elements classified as simple repeats, buffers or unknowns are reclassified into the
+#LTR superfamily using sed. 
+
+sed 's/#Simple_repeat/#LTR\/Unknown/g' \
+$GENOME.retrotransposons.TRIMs.lib.classified | \
+sed 's/#buffer/#LTR\/Unknown/g' | \
+sed 's/#Unknown/#LTR\/Unknown/g' \
+	> $GENOME.retrotransposons.TRIMs.lib.classified.reclassified
+
+#-------------------Retrotransposons with domains, FASTA extraction----------------------#
+
+#Changing the headers of the genome FASTA file 
 
 python2 $REPO/change_headers_to_seqN.py -i $GENOME | sed 's/ //g' \
 	> $GENOME.changed_headers
@@ -173,6 +403,8 @@ $GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta
 bedtools getfasta -fi $GENOME.changed_headers -bed \
 $GENOME.retrotransposons.gff99.dgt.withdomains.full -fo \
 $GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta
+
+#-------------------------------tPSI FASTA extraction------------------------------------#
 
 #In order to extract sequences from the TransposonPSI file, files had to be altered
 cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
@@ -197,52 +429,18 @@ python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
 	> $GENOME.tPSI.classified.fasta
 
 #--------------------------------Merging of libraries------------------------------------#
-#
 
-cp $GENOME.retro99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro99.fasta
-cp $GENOME.retro85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.retro85.fasta
-cp $GENOME.TRIM99.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM99.fasta
-cp $GENOME.TRIM85.fasta_files/CRL_Step3_Passed_Elements.fasta $GENOME.TRIM85.fasta
-
-#The python script renames the elements according to their group
-
-python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro99.fasta --name retro99 \
---type Unknown > $GENOME.retro99.renamed.fasta
-
-python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.retro85.fasta --name retro85 \
---type Unknown > $GENOME.retro85.renamed.fasta
-
-python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM99.fasta --name TRIM99 \
---type TRIM > $GENOME.TRIM99.renamed.fasta
-
-python2 $REPO/reprint.ltrharvest.lib.py -i $GENOME.TRIM85.fasta --name TRIM85 \
---type TRIM > $GENOME.TRIM85.renamed.fasta
-
-python2 $REPO/reprint.ltrharvest.lib.py -i \
-$GENOME.retrotransposons.gff99.dgt.withdomains.full.fasta --name retro99withdomains \
---type Unknown > $GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta
-
-python2 $REPO/reprint.ltrharvest.lib.py -i \
-$GENOME.retrotransposons.gff85.dgt.withdomains.full.fasta --name retro85withdomains \
---type Unknown > $GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta
-
-#Merging of libraries
-
-cat $GENOME.retro99.renamed.fasta \
-$GENOME.retro85.renamed.fasta \
-$GENOME.TRIM99.renamed.fasta \
-$GENOME.TRIM85.renamed.fasta \
-$GENOME.retrotransposons.gff99.dgt.withdomains.full.renamed.fasta \
-$GENOME.retrotransposons.gff85.dgt.withdomains.full.renamed.fasta \
-> $GENOME.retrotransposons.TRIMs.fasta
 cd RM*
 sed 's/ .*//g' consensi.fa.classified > consensi.fa.classified.stripped
 cd ..
-cat $GENOME.retrotransposons.TRIMs.fasta \
+cat $GENOME.retrotransposons.TRIMs.lib.classified.reclassified \
 RM*/consensi.fa.classified.stripped \
 $GENOME.tPSI.classified.fasta | fold -w 60 > $GENOME.repeats.fasta
 
 #---------------------------------Clustering---------------------------------------------#
+#Clustering of remaining elements are done using CD-HIT-EST with standard settings,
+#meaning that elements 90% similar will be clustered together. This clustering 
+#algorithm is not perfect for long sequences, so I am testing PSI-CD-HIT for this.
 
 $CDHIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr
 
@@ -294,41 +492,101 @@ $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column | wc -l
 
 python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l \
 $GENOME.repeats.only_uniprot | fold -w 60 \
-> $GENOME.repeats.srt.nr.no_uniprot
+	> $GENOME.repeats.srt.nr.no_uniprot
 
-#-----------------------------------------RepeatMasker-----------------------------------#
+#------------------------------Removing singletons---------------------------------------#
 
-##Creating a total repeat library
+makeblastdb -in $GENOME -dbtype nucl
+blastn -query $GENOME.repeats.srt.nr.no_uniprot \
+-db $GENOME -num_threads 10 -evalue 1e-5 -max_target_seqs 10 \
+-outfmt 6 -out denovolib.vs.$GENOME.blastn.1e-5.max50
 
-cat $GENOME.repeats.srt.nr.no_uniprot $REPO/repbase.update.04102015.teleostei.lib \
-> $GENOME.total.repeat.library
+cat denovolib.vs.$GENOME.blastn.1e-5.max50 | cut -f 1 | uniq -c | sort -n | column -t | \
+grep "1     " | cut -f 2 | awk '{ print $2}' > $GENOME.list_of_singletons
 
-#Making folders for each library
+python2 reprint.filtered.lib.py -i $GENOME.repeats.srt.nr.no_uniprot \
+-l $GENOME.list_of_singletons > $GENOME.repeats.srt.nr.no_uniprot.no_singletons
 
-mkdir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
-mkdir $GENOME.total.repeat.library.repeatmasker_output
-mkdir repbase.update.04102015.teleostei.lib.repeatmasker_output
+#-----------------------Removing simple repeats designated as TEs------------------------#
 
-RepeatMasker -lib $GENOME.repeats.srt.nr.no_uniprot -a -s -dir \
-$GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/ $GENOME
+#First splitting the library in elements found by tPSI and elements detected by other
+#programs.
 
-RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir \
-$GENOME.total.repeat.library.repeatmasker_output/ $GENOME
-
-RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -a -s -dir \
-repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
-
-#summary.landscape.slurm
-
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
-$GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out \
-	> $GENOME.repmask.denovo.summary
+fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+	> $GENOME.denovolib_tPSI
 	
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
-$GENOME.total.repeat.library.repeatmasker_output/*.out \
-	> $GENOME.repmask.total.summary
-	
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
-repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out\
-	> $GENOME.repmask.repbase.summary
+fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+	> $GENOME.denovolib_non_tPSI
+
+
+#The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
+#masked using TRF and then all sequences that were masked are filtered out. 
+
+fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
+	> $GENOME.denovolib_tPSI.CACTA_elements_only
+
+fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
+	> $GENOME.denovolib_tPSI.no_CACTA
+
+trf $GENOME.denovolib_tPSI.CACTA_elements_only \
+2 7 7 80 10 50 500 -h -m
+
+#output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
+
+#Only keeping sequences that was not masked at all (cutoff = 1%)
+
+python2 sequence_cleaner.py \
+$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
+
+#output: $clear_GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
+
+#Merging library:
+
+cat $GENOME.denovolib_tPSI.no_CACTA \
+clear_denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
+$GENOME.denovolib_non_tPSI
+	> $GENOME.final_denovo_lib
+
+#A final filter of 80 bp as not many TEs are smaller than that.
+
+python2 sequence_cleaner.py $GENOME.final_denovo_lib 80 0 
+
+#output clear_$GENOME.final_denovo_lib
+
+
+# #--------------------------------RepeatMasker------------------------------------------#
+# 
+# ##Creating a total repeat library
+# 
+# cat clear_$GENOME.final_denovo_lib $REPO/repbase.update.04102015.teleostei.lib \
+# > $GENOME.total.repeat.library
+# 
+# #Making folders for each library
+# 
+# mkdir $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
+# mkdir $GENOME.total.repeat.library.repeatmasker_output
+# mkdir repbase.update.04102015.teleostei.lib.repeatmasker_output
+# 
+# RepeatMasker -lib clear_$GENOME.final_denovo_lib -a -s -dir \
+# clear_$GENOME.final_denovo_lib.repeatmasker_output/ $GENOME
+# 
+# RepeatMasker -lib $GENOME.total.repeat.library -a -s -dir \
+# $GENOME.total.repeat.library.repeatmasker_output/ $GENOME
+# 
+# RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -a -s -dir \
+# repbase.update.04102015.teleostei.lib.repeatmasker_output/ $GENOME
+# 
+# #summary.landscape.slurm
+# 
+# /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+# $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output/*.out \
+# 	> $GENOME.repmask.denovo.summary
+# 	
+# /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+# $GENOME.total.repeat.library.repeatmasker_output/*.out \
+# 	> $GENOME.repmask.total.summary
+# 	
+# /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+# repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out\
+# 	> $GENOME.repmask.repbase.summary
 
