@@ -13,17 +13,26 @@ fi
 #SBATCH --mail-user=williambrynildsen@gmail.com
 #SBATCH --mail-type=ALL
 
+export REPO=/work/users/willibr/testing/repository
 GENOME=$1
 
 module load repeatmodeler/1.0.8
+module load python2/2.7.9
 
 #-----------------------------------RepeatModeler----------------------------------------#
 
+#Making sure RepeatModeler chooses to sample from contigs larger than N50.
+
+assemblathon_stats.pl -csv $GENOME | grep "N50 scaffold length" | column -t | \
+awk '{print $4}' > N50
+
+python2 $REPO/N50.py -i $GENOME --N50 N50 > $GENOME.N50
+
 #Create index for RepeatModeler
 
-BuildDatabase -name $GENOME -engine ncbi $GENOME
+BuildDatabase -name $GENOME.N50 -engine ncbi $GENOME.N50
 
 #Run RepeatModeler
 
-RepeatModeler -database $GENOME -engine ncbi
+RepeatModeler -database $GENOME.N50 -engine ncbi 
 
