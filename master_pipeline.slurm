@@ -13,11 +13,8 @@ fi
 #SBATCH --mail-user=williambrynildsen@gmail.com
 #SBATCH --mail-type=ALL
 
-#NB! Genome FASTA headers must not contain any special characters (only letters and/or 
-#numbers).
-
 export REPO=/work/users/willibr/testing/repository
-export GENOME=$1
+export ORIGINALGENOME=$1
 export tPSI=/projects/cees/bin/TransposonPSI/transposonPSI.pl
 export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
 
@@ -35,6 +32,17 @@ module load blast+/2.2.29
 module load repeatmasker/4.0.5
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
+
+#NB! Genome FASTA headers must not contain any special characters (only letters and/or 
+#numbers).
+
+#grep ">" $ORIGINALGENOME > halfoftable1
+#python2 $REPO/reprint.genome.py -i $ORIGINALGENOME > reprinted.genome
+#GENOME=reprinted.genome
+#grep ">" $GENOME > halfoftable2
+#paste halfoftable1 halfoftable2
+
+
 
 #Starting long jobs in separate scripts.
  sh slave_LTRharvest.slurm $GENOME &
