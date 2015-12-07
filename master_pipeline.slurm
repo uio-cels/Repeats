@@ -13,12 +13,57 @@ fi
 #SBATCH --mail-user=williambrynildsen@gmail.com
 #SBATCH --mail-type=ALL
 
+#------------------------------Pointing to paths-----------------------------------------#
+
+#The repository contains databases and scripts used during the pipeline.
 export REPO=/work/users/willibr/testing/repository
+
+#---Content of the repository:
+
+#---Databases
+#	eukaryotic-tRNAs.fa
+#	repbase.update.04102015.teleostei.lib
+#	uniprot_sprot17nov2015.fasta
+#	RepeatPeps.lib
+#	TEseeker.DNAtransposons.fasta
+
+#---Python scripts (only tested in python2/2.7.9)
+#	change_headers_to_seqN.py
+#	reprint.tPSI.lib.py
+#	reprint.ltrharvest.lib.py
+#	reprint.ltrharvest.lib.new.py
+#	reprint.filtered.lib.py
+#	sequence_cleaner.py
+#	N50.py
+#	reprint.genome.py
+
+#---LTRharvest/LTRdigest filtering (courtesy of Ning Jiang)
+#	TRIM99.CRL_Step1.pl
+#	TRIM85.CRL_Step1.pl
+#	retro99.CRL_Step1.pl
+#	retro85.CRL_Step1.pl
+#	CRL_Step2.pl
+#	CRL_Step3.pl
+#	CRL_Step4.pl
+#	CRL_Step5.pl
+#	ltr_library.pl
+
+#---RepeatMasker parsing
+#	get.rm.master.sh
+#	get.rm.stats.sh
+#	get.rm.stats.rename.sh
+#	get.rm.overview.sh
+
+#The only parameter given the pipeline is the genome.
 export GENOME=$1
+
+#Point to TransposonPSI
 export tPSI=/projects/cees/bin/TransposonPSI/transposonPSI.pl
+
+#Point to CD-HIT
 export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
 
-#Loading modules
+#-----------------------------Loading modules-----------------------------------------------#
 
 module load genometools/1.5.7 
 module load repeatmodeler/1.0.8
@@ -40,7 +85,7 @@ module load cd-hit/4.6.4
 #python2 $REPO/reprint.genome.py -i $ORIGINALGENOME > reprinted.genome
 #GENOME=reprinted.genome
 #grep ">" $GENOME > halfoftable2
-#paste halfoftable1 halfoftable2
+#paste halfoftable1 halfoftable2 > $GENOME
 
 
 
@@ -474,16 +519,16 @@ $GENOME.repeats.only_uniprot | fold -w 60 \
 # 
 #------------------------------Removing singletons---------------------------------------#
 
-makeblastdb -in $GENOME -dbtype nucl
-blastn -query $GENOME.repeats.srt.nr.no_uniprot \
--db $GENOME -num_threads 1 -evalue 1e-5 -max_target_seqs 10 \
--outfmt 6 -out denovolib.vs.$GENOME.blastn.1e-5.max50
-
-cat denovolib.vs.$GENOME.blastn.1e-5.max50 | cut -f 1 | uniq -c | sort -n | column -t | \
-grep "1     " | cut -f 2 | awk '{ print $2}' > $GENOME.list_of_singletons
-
-python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr.no_uniprot \
--l $GENOME.list_of_singletons > $GENOME.repeats.srt.nr.no_uniprot.no_singletons
+# makeblastdb -in $GENOME -dbtype nucl
+# blastn -query $GENOME.repeats.srt.nr.no_uniprot \
+# -db $GENOME -num_threads 1 -evalue 1e-5 -max_target_seqs 10 \
+# -outfmt 6 -out denovolib.vs.$GENOME.blastn.1e-5.max50
+# 
+# cat denovolib.vs.$GENOME.blastn.1e-5.max50 | cut -f 1 | uniq -c | sort -n | column -t | \
+# grep "1     " | cut -f 2 | awk '{ print $2}' > $GENOME.list_of_singletons
+# 
+# python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr.no_uniprot \
+# -l $GENOME.list_of_singletons > $GENOME.repeats.srt.nr.no_uniprot.no_singletons
 
 #-----------------------Removing simple repeats designated as TEs------------------------#
 
@@ -567,3 +612,18 @@ python2 $REPO/sequence_cleaner.py $GENOME.final_denovo_lib 80 0
 # /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
 # repbase.update.04102015.teleostei.lib.repeatmasker_output/*.out\
 # 	> $GENOME.repmask.repbase.summary
+
+#---------------------------------Result parsing-----------------------------------------#
+
+# cd $GENOME.repeats.srt.nr.no_uniprot.repeatmasker_output
+# get.rm.master.sh $GENOME
+# cd ..
+# 
+# cd $GENOME.total.repeat.library.repeatmasker_output
+# get.rm.master.sh $GENOME
+# cd ..
+# 
+# cd repbase.update.04102015.teleostei.lib.repeatmasker_output
+# get.rm.master.sh $GENOME
+# cd ..
+
