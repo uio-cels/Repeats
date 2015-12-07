@@ -1,9 +1,9 @@
 #!/bin/sh
 #SBATCH --job-name=pipeline
 #SBATCH --account=nn9244k
-#SBATCH --time=96:0:0
+#SBATCH --time=0:1:0
 #SBATCH --mem-per-cpu=3000M 
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 
 if [ -n "$SLURM_JOB_ID" ]; then
     # running in a slurm job
@@ -418,13 +418,13 @@ module load cd-hit/4.6.4
 # #Elements classified as simple repeats, buffers or unknowns are reclassified into the
 # #LTR superfamily using sed. 
 # 
-# sed 's/#Simple_repeat/#LTR\/Unknown/g' \
-# $GENOME.retrotransposons.TRIMs.lib.classified | \
-# sed 's/#buffer/#LTR\/Unknown/g' | \
-# sed 's/#Unknown/#LTR\/Unknown/g'| \
-# sed 's/#DNA.*/#LTR\/Unknown/g' | \
-# sed 's/LINE.*/#LTR\/Unknown/g' | \
-# 	> $GENOME.retrotransposons.TRIMs.lib.classified.reclassified
+sed 's/#Simple_repeat/#LTR\/Unknown/g' \
+$GENOME.retrotransposons.TRIMs.lib.classified | \
+sed 's/#buffer/#LTR\/Unknown/g' | \
+sed 's/#Unknown/#LTR\/Unknown/g'| \
+sed 's/#DNA.*/#LTR\/Unknown/g' | \
+sed 's/LINE.*/#LTR\/Unknown/g' \
+	> $GENOME.retrotransposons.TRIMs.lib.classified.reclassified
 # 
 # 
 # #-------------------------------tPSI FASTA extraction------------------------------------#
@@ -471,51 +471,51 @@ module load cd-hit/4.6.4
 
 #Removing false transposons by checking against SwissProt-UniProt. TIME: ~1 hour 
 
-blastx -query $GENOME.repeats.srt.nr.80 \
--db $REPO/uniprot_sprot17nov2015.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
--outfmt 6 -out $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50
-
-blastx -query  $GENOME.repeats.srt.nr.80 \
--db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
--outfmt 6 -out $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50
-
-sort -k1,1 -k12,12nr -k11,11n \
-$GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50 | sort -u -k1,1 \
---merge > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring
-
-sort -k1,1 -k12,12nr -k11,11n \
-$GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50 | sort -u -k1,1 \
---merge > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring
-
-cut -f 1 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring \
-> $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column
-
-cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
-> $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
-
-echo "Num entries only hit to RepeatPeps" 
-comm -13 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
-$GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
-> $GENOME.repeats.only_repeatpeps
-	
-cat $GENOME.repeats.only_repeatpeps |wc -l
-
-echo "Num entries only hit to UniProt"
-
-comm -23 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
-$GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
-> $GENOME.repeats.only_uniprot
-	
-cat $GENOME.repeats.only_uniprot |wc -l
-
-echo "Num entries hit to both"
-
-comm -12 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
-$GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column | wc -l
-
-python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l \
-$GENOME.repeats.only_uniprot | fold -w 60 \
-	> $GENOME.repeats.srt.nr.no_uniprot
+# blastx -query $GENOME.repeats.srt.nr.80 \
+# -db $REPO/uniprot_sprot17nov2015.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
+# -outfmt 6 -out $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50
+# 
+# blastx -query  $GENOME.repeats.srt.nr.80 \
+# -db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
+# -outfmt 6 -out $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50
+# 
+# sort -k1,1 -k12,12nr -k11,11n \
+# $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50 | sort -u -k1,1 \
+# --merge > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring
+# 
+# sort -k1,1 -k12,12nr -k11,11n \
+# $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50 | sort -u -k1,1 \
+# --merge > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring
+# 
+# cut -f 1 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.highest_scoring \
+# > $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column
+# 
+# cut -f 1 $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.highest_scoring \
+# > $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column
+# 
+# echo "Num entries only hit to RepeatPeps" 
+# comm -13 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
+# $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
+# > $GENOME.repeats.only_repeatpeps
+# 	
+# cat $GENOME.repeats.only_repeatpeps |wc -l
+# 
+# echo "Num entries only hit to UniProt"
+# 
+# comm -23 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
+# $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column \
+# > $GENOME.repeats.only_uniprot
+# 	
+# cat $GENOME.repeats.only_uniprot |wc -l
+# 
+# echo "Num entries hit to both"
+# 
+# comm -12 $GENOME.repeats.srt.nr.uniprot-sprot.blastx.1e-5.max50.first_column \
+# $GENOME.repeats.srt.nr.repeatpeps.blastx.1e-5.max50.first_column | wc -l
+# 
+# python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr -l \
+# $GENOME.repeats.only_uniprot | fold -w 60 \
+# 	> $GENOME.repeats.srt.nr.no_uniprot
 # 
 #------------------------------Removing singletons---------------------------------------#
 
@@ -535,44 +535,44 @@ $GENOME.repeats.only_uniprot | fold -w 60 \
 #First splitting the library in elements found by tPSI and elements detected by other
 #programs.
 
-fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-	> $GENOME.denovolib_tPSI
-	
-fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-	> $GENOME.denovolib_non_tPSI
-
-
-#The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
-#masked using TRF and then all sequences that were masked are filtered out. 
-
-fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
-	> $GENOME.denovolib_tPSI.CACTA_elements_only
-
-fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
-	> $GENOME.denovolib_tPSI.no_CACTA
-
-trf $GENOME.denovolib_tPSI.CACTA_elements_only \
-2 7 7 80 10 50 500 -h -m
-
-#output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
-
-#Only keeping sequences that was not masked at all (cutoff = 1%)
-
-python2 $REPO/sequence_cleaner.py \
-$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
-
-#output: $clear_GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
-
-#Merging library:
-
-cat $GENOME.denovolib_tPSI.no_CACTA \
-clear_denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
-$GENOME.denovolib_non_tPSI \
-	> $GENOME.final_denovo_lib
-
-#A final filter of 80 bp as not many TEs are smaller than that.
-
-python2 $REPO/sequence_cleaner.py $GENOME.final_denovo_lib 80 0 
+# fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+# 	> $GENOME.denovolib_tPSI
+# 	
+# fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+# 	> $GENOME.denovolib_non_tPSI
+# 
+# 
+# #The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
+# #masked using TRF and then all sequences that were masked are filtered out. 
+# 
+# fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
+# 	> $GENOME.denovolib_tPSI.CACTA_elements_only
+# 
+# fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
+# 	> $GENOME.denovolib_tPSI.no_CACTA
+# 
+# trf $GENOME.denovolib_tPSI.CACTA_elements_only \
+# 2 7 7 80 10 50 500 -h -m
+# 
+# #output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
+# 
+# #Only keeping sequences that was not masked at all (cutoff = 1%)
+# 
+# python2 $REPO/sequence_cleaner.py \
+# $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
+# 
+# #output: $clear_GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
+# 
+# #Merging library:
+# 
+# cat $GENOME.denovolib_tPSI.no_CACTA \
+# clear_denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
+# $GENOME.denovolib_non_tPSI \
+# 	> $GENOME.final_denovo_lib
+# 
+# #A final filter of 80 bp as not many TEs are smaller than that.
+# 
+# python2 $REPO/sequence_cleaner.py $GENOME.final_denovo_lib 80 0 
 
 #output clear_$GENOME.final_denovo_lib
 
