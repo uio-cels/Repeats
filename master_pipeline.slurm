@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --job-name=pipeline
+#SBATCH --job-name=test_pipeline
 #SBATCH --account=nn9244k
 #SBATCH --time=0:20:0
 #SBATCH --mem-per-cpu=3000M 
@@ -15,19 +15,20 @@ fi
 
 #------------------------------Pointing to paths-----------------------------------------#
 
-#The repository contains databases and scripts used during the pipeline.
+#	The repository contains databases and scripts used during the pipeline.
+
 export REPO=/work/users/willibr/testing/repository
 
 #---Content of the repository:
 
-#---Databases
+#	Databases:
 #	eukaryotic-tRNAs.fa
 #	repbase.update.04102015.teleostei.lib
 #	uniprot_sprot17nov2015.fasta
 #	RepeatPeps.lib
 #	TEseeker.DNAtransposons.fasta
 
-#---Python scripts (only tested in python2/2.7.9)
+#	Python scripts (only tested in python2/2.7.9):
 #	change_headers_to_seqN.py
 #	reprint.tPSI.lib.py
 #	reprint.ltrharvest.lib.py
@@ -37,7 +38,7 @@ export REPO=/work/users/willibr/testing/repository
 #	N50.py
 #	reprint.genome.py
 
-#---LTRharvest/LTRdigest filtering (courtesy of Ning Jiang)
+#	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang):
 #	TRIM99.CRL_Step1.pl
 #	TRIM85.CRL_Step1.pl
 #	retro99.CRL_Step1.pl
@@ -48,22 +49,28 @@ export REPO=/work/users/willibr/testing/repository
 #	CRL_Step5.pl
 #	ltr_library.pl
 
-#---RepeatMasker parsing
+#	RepeatMasker parsing:
 #	get.rm.master.sh
 #	get.rm.stats.sh
 #	get.rm.stats.rename.sh
 #	get.rm.overview.sh
 
-#The only parameter given the pipeline is the genome.
+#	Misc:
+#	assemblathon_stats.pl
+
+#	The only parameter given the pipeline is the genome.
+
 export GENOME=$1
 
-#Point to TransposonPSI, not module yet
+#	Point to TransposonPSI, not module yet
+
 export tPSI=/projects/cees/bin/TransposonPSI/transposonPSI.pl
 
-#Point to CD-HIT -- Can probably change this with using the module
+#	Point to CD-HIT -- Can probably change this with using the module system
+
 export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
 
-#-----------------------------Loading modules-----------------------------------------------#
+#-----------------------------Loading modules--------------------------------------------#
 
 module load genometools/1.5.7 
 module load repeatmodeler/1.0.8
@@ -72,54 +79,77 @@ module load perlmodules/5.10_2
 module load hmmer/3.0
 module load muscle/3.8.31
 module load python2/2.7.9
-module load usearch/7.0.1090
 module load blast+/2.2.29
 module load repeatmasker/4.0.5
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
-#NB! Genome FASTA headers must not contain any special characters (only letters and/or 
-#numbers).
+#------------------------------Genome index table----------------------------------------#
+#	NB! Genome FASTA headers must not contain any special characters (only letters and/or 
+#	numbers).
 
-grep ">" $GENOME > halfoftable1
+#	Renaming headers
 python2 $REPO/reprint.genome.py -i $GENOME > $GENOME.seq
 
+#	Printing headers of the original genome file
+grep ">" $GENOME > halfoftable1
+
+#	Printing headers of the renamed genome file
 grep ">" $GENOME.seq > halfoftable2
+
+#	Creating a file with two columns containing original header name and new header name
 paste halfoftable1 halfoftable2 > $GENOME.table
+
+#	Pointing the main variable, $GENOME to the version with renamed headers.
 
 GENOME=$GENOME.seq
 
-#Starting long jobs in separate scripts.
-# sh slave_LTRharvest.slurm $GENOME &
-# sh slave_tPSI.slurm $GENOME &
-# sh slave_RepeatModeler.slurm $GENOME &
-# wait
+#################################
+#	Removal of excess files  
+
+rm halfoftable1					
+rm halfoftable2				
+#################################
+
+#---------------------------------Harvesting repeats-------------------------------------#
+
+#	Starting LTRharvest/LTRdigest, RepeatModeler and TransposonPSI
+
+arrayrun 1-3 worker_script.slurm $REPO $GENOME $tPSI $CDHIT 
+
+wait
+
 
 #------------------------------Filtration and extraction---------------------------------#
-##Running custom scripts provided by Ning Jiang (she will publish them soon) to filter
-# the LTRdigest results
+
+#	Running custom scripts provided by Ning Jiang (she will publish them soon) to filter
+# 	the LTRdigest results.
+#	
+#	Step1: The output of LTRdigest (.dgt files) are processed so that only elements with
+#	a polypurine tract (PPT) and/or a primer binding site (PBS) are chosen, but only if 
+#	at least 50% of the PPT/PBS sequence are located in the internal regions of the 
+#	putative LTR retrotransposon and only if the distance between the long terminal 
+#	repeats (LTRs) and PPT's/PBS's are maximum 20 bp.
 
 perl $REPO/retro99.CRL_Step1.pl -gff $GENOME.retrotransposons.gff99.dgt
 perl $REPO/retro85.CRL_Step1.pl -gff $GENOME.retrotransposons.gff85.dgt 
 perl $REPO/TRIM85.CRL_Step1.pl -gff $GENOME.TRIM.gffT85.dgt 
 perl $REPO/TRIM99.CRL_Step1.pl -gff $GENOME.TRIM.gffT99.dgt 
-# 
 
-##Continuing running scripts provided by Ning Jiang.
+#	Creating folders to place a lot of files
 
-#First, creating folders
 mkdir $GENOME.TRIM85.fasta_files
 mkdir $GENOME.TRIM99.fasta_files
 mkdir $GENOME.retro99.fasta_files
 mkdir $GENOME.retro85.fasta_files
 
-# #Copying the last script into each folder (mandatory)
+# 	Copying the third script into each folder (mandatory). CRL_Step3 needs to be run in
+#	the same folder as the genome file and some other files.
+
 cp $REPO/CRL_Step3.pl $GENOME.TRIM85.fasta_files
 cp $REPO/CRL_Step3.pl $GENOME.TRIM99.fasta_files
 cp $REPO/CRL_Step3.pl $GENOME.retro99.fasta_files
 cp $REPO/CRL_Step3.pl $GENOME.retro85.fasta_files
-
-#Copying other files as well, including the genome file (not good for space)
 
 cp retro85.CRL_Step1_Passed_Elements.txt $GENOME.retro85.fasta_files/
 cp $GENOME.retrotransposons.out85 $GENOME.retro85.fasta_files/
@@ -141,8 +171,8 @@ cp $GENOME.TRIM.outT85 $GENOME.TRIM85.fasta_files/
 cp $GENOME.TRIM.resultT85 $GENOME.TRIM85.fasta_files/
 cp $GENOME $GENOME.TRIM85.fasta_files/
 
-##Running part II of the custom script, and moving output FASTA files into the right
-# folder
+#	Running part II of the custom script, and moving output FASTA files into the right
+# 	folder
 
 perl $REPO/CRL_Step2.pl --step1 retro85.CRL_Step1_Passed_Elements.txt --repeatfile \
 $GENOME.retrotransposons.out85 --resultfile $GENOME.retrotransposons.result85 \
@@ -465,7 +495,7 @@ $GENOME.tPSI.classified.fasta | fold -w 60 > $GENOME.repeats.fasta
 #meaning that elements 90% similar will be clustered together. This clustering 
 #algorithm is not perfect for long sequences. 80% is preferred to 90%. Takes ~10 min.
 
-$CDHIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr.80 -c 0.8 -T 10
+$CDHIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr.80 -c 0.8 -T 16
 
 #---------------------------Removing false positives-------------------------------------#
 
@@ -586,8 +616,8 @@ python2 $REPO/sequence_cleaner.py $GENOME.final_denovo_lib 80 0
 
 
 # #--------------------------------RepeatMasker------------------------------------------#
-# 
-##Creating a total repeat library
+
+#	Creating a total repeat library
 
 cat clear_$GENOME.final_denovo_lib $REPO/repbase.update.04102015.teleostei.lib \
 > $GENOME.total.repeat.library
@@ -629,6 +659,32 @@ $GENOME.repmask.repbase/ $GENOME
 /cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
 $GENOME.repmask.repbase/*.out\
 	> $GENOME.repmask.repbase.summary
+
+#--------------------------------RepeatLandscape-----------------------------------------#
+
+perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
+-s $GENOME.repmask.denovo/$GENOME.divsum $GENOME.repmask.denovo/*.align
+
+perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
+-div $GENOME.repmask.denovo/$GENOME.divsum -t "$GENOME denovo RepeatLandscape" \
+	> $GENOME.denovo.RL.html
+
+
+perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
+-s $GENOME.repmask.total/$GENOME.divsum $GENOME.repmask.total/*.align
+
+perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
+-div $GENOME.repmask.total/$GENOME.divsum -t "$GENOME denovo + repbase RepeatLandscape" \
+	> $GENOME.total.RL.html
+	
+	
+perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
+-s $GENOME.repmask.species/$GENOME.divsum $GENOME.repmask.species/*.align
+
+perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
+-div $GENOME.repmask.species/$GENOME.divsum -t "$GENOME -species RepeatLandscape" \
+	> $GENOME.total.RL.html
+
 
 
 #---------------------------------Result parsing-----------------------------------------#
