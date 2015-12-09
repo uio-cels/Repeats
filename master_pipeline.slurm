@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --job-name=test_pipeline
 #SBATCH --account=nn9244k
-#SBATCH --time=0:20:0
+#SBATCH --time=1:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=16
 
@@ -591,12 +591,12 @@ trf $GENOME.denovolib_tPSI.CACTA_elements_only \
 python2 $REPO/sequence_cleaner.py \
 $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
 
-#output: $clear_GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
+#output: $clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
 
 #Merging library:
 
 cat $GENOME.denovolib_tPSI.no_CACTA \
-clear_denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
+clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
 $GENOME.denovolib_non_tPSI \
 	> $GENOME.final_denovo_lib
 
@@ -683,7 +683,7 @@ perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
 
 perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
 -div $GENOME.repmask.species/$GENOME.divsum -t "$GENOME -species RepeatLandscape" \
-	> $GENOME.total.RL.html
+	> $GENOME.species.RL.html
 
 
 
@@ -692,8 +692,7 @@ perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
 cd $GENOME.repmask.total/
 sh $REPO/get.rm.master.sh $GENOME
 cd ..
- 
-mkdir 
+
 cd $GENOME.repmask.denovo/
 sh $REPO/get.rm.master.sh $GENOME
 cd ..
