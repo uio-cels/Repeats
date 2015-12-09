@@ -64,7 +64,7 @@ elif [ $TASK_ID == 2 ]; then
 	
 	perl $tPSI $GENOME nuc >tPSI.log
 
-elif [ $TASK_ID == 3 ]; then
+elif [ $TASK_ID = 3 ]; then
 
 #-------------------------------LTRharvest/LTRdigest-------------------------------------#
 	
