@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --job-name=worker
 #SBATCH --account=nn9244k
-#SBATCH --time=1:0:0
+#SBATCH --time=120:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=16
 
@@ -141,11 +141,11 @@ elif [ $TASK_ID = 3 ]; then
 	$GENOME.retrotransposons.gff85.sort \
 	$GENOME > $GENOME.retrotransposons.gff85.dgt &
 
-	gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
+	gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa \
 	$GENOME.TRIM.gffT85.sort \
 	$GENOME > $GENOME.TRIM.gffT85.dgt &
 
-	gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa -hmms $REPO/gydb/*hmm -- \
+	gt ltrdigest -trnas $REPO/eukaryotic-tRNAs.fa \
 	$GENOME.TRIM.gffT99.sort \
 	$GENOME > $GENOME.TRIM.gffT99.dgt &
 
