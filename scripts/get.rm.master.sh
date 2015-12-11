@@ -69,4 +69,17 @@ awk '{print $5,"\t",$17,"\t",$18,"\t",$19,"\t",$20,"\t",$21,"\t",$22,"\t", \
 $23,"\t",$24"#"$11";""Position=["$12":"$13":"$14"]"}' | sed 's/ //g' \
         > $GENOME.classified.no_overlaps.gff
 
+#       Simple repeats
+
+grep "Simple_repeat" $GENOME.classified.no_overlaps.gff > $GENOME.simple_repeats.gff
+
+#       Low complexity
+
+grep "Low_complexity" $GENOME.classified.no_overlaps.gff > $GENOME.lc.gff
+
+#       Putative TEs
+
+grep -v "Simple_repeat" $GENOME.classified.no_overlaps.gff | grep -v "Low_complexity" \
+	> $GENOME.transposons.gff
+
 #In IGV, first sort, second load and press OK to index.
