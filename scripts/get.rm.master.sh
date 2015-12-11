@@ -66,7 +66,7 @@ grep -v "##" $GENOME.gff3 > $GENOME.gff3.no_headers
 
 paste $GENOME.out.no_header $GENOME.gff3.no_headers | grep -v "*" | \
 awk '{print $5,"\t",$17,"\t",$18,"\t",$19,"\t",$20,"\t",$21,"\t",$22,"\t", \
-$23,"\t",$24"#"$11":["$12"]["$13"]["$14"]"}' | sed 's/ //g' \
-	> $GENOME.classified.no_overlaps.gff
+$23,"\t",$24"#"$11";""Position=["$12":"$13":"$14"]"}' | sed 's/ //g' \
+        > $GENOME.classified.no_overlaps.gff
 
 #In IGV, first sort, second load and press OK to index.
