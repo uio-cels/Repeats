@@ -1,7 +1,7 @@
 #!/bin/sh
-#SBATCH --job-name=ZEBRA
+#SBATCH --job-name=pipeline
 #SBATCH --account=nn9244k
-#SBATCH --time=120:0:0
+#SBATCH --time=1:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=16
 
@@ -77,11 +77,11 @@ module load genometools/1.5.7
 module load repeatmodeler/1.0.8
 module load blast/2.2.26
 module load perlmodules/5.10_2
-module load hmmer/3.0
+module load hmmer/3.1b1
 module load muscle/3.8.31
 module load python2/2.7.9
 module load blast+/2.2.29
-module load repeatmasker/4.0.5
+module load repeatmasker/4.0.6
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
@@ -528,11 +528,7 @@ python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
 	> $GENOME.tPSI.classified.fasta
 
 #---------------------------------Clustering---------------------------------------------#
-#Clustering of remaining elements are done using CD-HIT-EST with standard settings,
-#meaning that elements 90% similar will be clustered together. This clustering 
-#algorithm is not perfect for long sequences. 80% is preferred to 90%. Takes ~10 min.
-
-#$CDHIT -i $GENOME.repeats.fasta -o $GENOME.repeats.srt.nr.80 -c 0.8 -T 16
+#Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
 
 $CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
 -c 0.8 -T 16 -n 5
@@ -550,7 +546,7 @@ $GENOME.tPSI.classified.fasta.nr.80.n5 | fold -w 60 > $GENOME.repeats.fasta
 
 #---------------------------Removing false positives-------------------------------------#
 
-Removing false transposons by checking against SwissProt-UniProt. TIME: ~1 hour 
+#Removing false transposons by checking against SwissProt-UniProt. TIME: ~1 hour 
 
 blastx -query $GENOME.repeats.fasta \
 -db $REPO/uniprot_sprot17nov2015.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
@@ -598,98 +594,109 @@ python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.fasta -l \
 $GENOME.repeats.only_uniprot | fold -w 60 \
 	> $GENOME.repeats.srt.nr.no_uniprot
 
---------------------------BLASTX for classification-------------------------------------#
+#-----------------------Removing simple repeats designated as TEs------------------------#
 
-blastx -query $GENOME.repeats.srt.nr.no_uniprot \
+#	First splitting the library in elements found by tPSI and elements detected by other
+#	programs.
+
+fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+	> $GENOME.denovolib_tPSI
+	
+fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
+	> $GENOME.denovolib_non_tPSI
+
+#	The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
+#	masked using TRF and then all sequences that were masked are filtered out. 
+
+fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
+	> $GENOME.denovolib_tPSI.CACTA_elements_only
+
+fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
+	> $GENOME.denovolib_tPSI.no_CACTA
+
+trf $GENOME.denovolib_tPSI.CACTA_elements_only \
+2 7 7 80 10 50 500 -h -m
+
+#	Output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
+
+#	Only keeping sequences that was not masked at all (cutoff = 1%)
+
+python2 $REPO/sequence_cleaner.py \
+$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
+
+#	Output: $clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
+
+#	Merging library:
+
+cat $GENOME.denovolib_tPSI.no_CACTA \
+clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
+$GENOME.denovolib_non_tPSI \
+	> $GENOME.final_denovo_lib
+
+#--------------------------BLASTX for classification-------------------------------------#
+
+blastx -query $GENOME.final_denovo_lib \
 -db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 1 -outfmt \
 '6 bitscore length pident qseqid sacc' | awk '{print $5," ",$4," ",$1," ",$2," ",$3}' \
 	> $GENOME.ClassificationScheme
 
 python2 $REPO/classifier.py -i \
-$GENOME.repeats.srt.nr.no_uniprot -c $GENOME.ClassificationScheme \
+$GENOME.final_denovo_lib -c $GENOME.ClassificationScheme \
 	> $GENOME.classified_repeats.fasta
 
 awk '{print $2}' $GENOME.classified_repeats.fasta | grep "#" > list_to_fastagrep
 
-fastagrep -v -f list_to_fastagrep $GENOME.repeats.srt.nr.no_uniprot \
+fastagrep -v -f list_to_fastagrep $GENOME.final_denovo_lib \
 	> $GENOME.non_classified_repeats.fasta
 
 cat $GENOME.non_classified_repeats.fasta $GENOME.classified_repeats.fasta \
 	> $GENOME.denovolib
 
-#------------------------------Removing singletons---------------------------------------#
+#-----------------------------HMMR classification of "Unknowns"--------------------------#
 
-# makeblastdb -in $GENOME -dbtype nucl
-# blastn -query $GENOME.repeats.srt.nr.no_uniprot \
-# -db $GENOME -num_threads 1 -evalue 1e-5 -max_target_seqs 10 \
-# -outfmt 6 -out denovolib.vs.$GENOME.blastn.1e-5.max50
-# 
-# cat denovolib.vs.$GENOME.blastn.1e-5.max50 | cut -f 1 | uniq -c | sort -n | column -t | \
-# grep "1     " | cut -f 2 | awk '{ print $2}' > $GENOME.list_of_singletons
-# 
-# python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.srt.nr.no_uniprot \
-# -l $GENOME.list_of_singletons > $GENOME.repeats.srt.nr.no_uniprot.no_singletons
+#	Retrieving the FASTA sequences of unknown repeats from RepeatModeler
 
-#-----------------------Removing simple repeats designated as TEs------------------------#
+fastagrep -p "#Unknown" $GENOME.denovolib | fastagrep -p ">rnd" \
+	> $GENOME.repmod.unknowns.lib
 
-#First splitting the library in elements found by tPSI and elements detected by other
-#programs.
+#	Running nhmmscan to search for homology in Dfam.
 
-# fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-# 	> $GENOME.denovolib_tPSI
-# 	
-# fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-# 	> $GENOME.denovolib_non_tPSI
-# 
-# 
-# #The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
-# #masked using TRF and then all sequences that were masked are filtered out. 
-# 
-# fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
-# 	> $GENOME.denovolib_tPSI.CACTA_elements_only
-# 
-# fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
-# 	> $GENOME.denovolib_tPSI.no_CACTA
-# 
-# trf $GENOME.denovolib_tPSI.CACTA_elements_only \
-# 2 7 7 80 10 50 500 -h -m
-# 
-# #output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
-# 
-# #Only keeping sequences that was not masked at all (cutoff = 1%)
-# 
-# python2 $REPO/sequence_cleaner.py \
-# $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
-# 
-# #output: $clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
-# 
-# #Merging library:
-# 
-# cat $GENOME.denovolib_tPSI.no_CACTA \
-# clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
-# $GENOME.denovolib_non_tPSI \
-# 	> $GENOME.final_denovo_lib
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib 1> $GENOME.DFAM.out 
 
-#A final filter of 80 bp as not many TEs are smaller than that.
-#But some simple repeats detected are.
+#	Running a set of python scripts to produce annotated versions of the libraries
 
-# fastagrep -i -p "Simple repeats" > $GENOME.simple_repeats
-# fastagrep -i -p "buffer" > $GENOME.buffer
-# cat $GENOME.simple_repeats $GENOME.buffer > $GENOME.small_repeats
-# 
-# fastagrep -i -p -v "Simple repeats" > $GENOME.no_simple_repeats
-# fastagrep -i -p -v "buffer" > $GENOME.no_simple_repeats.no_buffers
+python2 $REPO/dfammer.py -i $GENOME.repmod.unknowns.dfam_results \
+	> $GENOME.repmod.unknowns.dfam_tophits
 
-# python2 $REPO/sequence_cleaner.py $GENOME.final_denovo_lib 80 0 
+python2 $REPO/dfammer2.py -i $GENOME.repmod.unknowns.dfam_tophits \
+	> $GENOME.repmod.unknowns.annotated.list
 
-#output clear_$GENOME.final_denovo_lib
+awk '{print $2}' $GENOME.repmod.unknowns.annotated.list \
+	> $GENOME.repmod.unknowns.annotated.list.to_fastagrep
 
+python2 $REPO/classifier.py -i $GENOME.repmod.unknowns.lib -c \
+$GENOME.repmod.unknowns.annotated.list \
+	> $GENOME.repmod.unknowns.dfam_classified.lib
 
-# #--------------------------------RepeatMasker------------------------------------------#
+#	Extracting all sequences except the unknowns not classified by HMM model homology
+
+fastagrep -v -f $GENOME.repmod.unknowns.annotated.list.to_fastagrep $GENOME.denovolib \
+	> $GENOME.denovolib.no_classifiable_unknowns
+
+#	Removing bottom empty line
+
+sed -i '/^$/d' $GENOME.repmod.unknowns.dfam_classified.lib 
+
+cat $GENOME.repmod.unknowns.dfam_classified.lib \
+$GENOME.denovolib.no_classifiable_unknowns \
+	> $GENOME.denovolib.classifed
+
+#--------------------------------RepeatMasker------------------------------------------#
 
 #	Creating a total repeat library
 
-cat $GENOME.denovolib $REPO/repbase.update.04102015.teleostei.lib \
+cat $GENOME.denovolib.classifed $REPO/repbase.update.04102015.teleostei.lib \
 > $GENOME.total.repeat.library
 
 #Making folders for each library
@@ -701,60 +708,46 @@ mkdir $GENOME.repmask.species
 
 #RepeatMasking and creating summaries
 
-RepeatMasker -lib $GENOME.total.repeat.library -gff -a -s -pa 16 -dir \
-$GENOME.repmask.total/ $GENOME 
+RepeatMasker -lib $GENOME.denovolib.classifed -gff -a -s -pa 16 -dir \
+$GENOME.repmask.denovo/ $GENOME
 
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
-$GENOME.total.repeat.library.repeatmasker_output/*.out \
-	> $GENOME.repmask.total.summary
-
-RepeatMasker -species teleostei -gff -a -s -pa 16 -dir \
-$GENOME.repmask.species/ $GENOME 
-
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
-$GENOME.repmask.species/*.out \
-	> $GENOME.repmask.species_teleostei.summary
-
-RepeatMasker -lib $GENOME.denovolib -gff -a -s -pa 16 -dir \
-$GENOME.repmask.denovo/ $GENOME 
-
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+/cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
 $GENOME.repmask.denovo/*.out \
 	> $GENOME.repmask.denovo.summary
 
+RepeatMasker -lib $GENOME.total.repeat.library -gff -a -s -pa 16 -dir \
+$GENOME.repmask.total/ $GENOME 
 
+/cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
+$GENOME.repmask.total/*.out \
+	> $GENOME.repmask.total.summary
+
+RepeatMasker -species eukaryota -gff -a -s -pa 16 -dir \
+$GENOME.repmask.species/ $GENOME 
+
+/cluster/software/VERSIONS/repeatmasker-4.0.6/util/ -species teleostei \
+$GENOME.repmask.species/*.out \
+	> $GENOME.repmask.species_eukaryota.summary
+
+ 
 RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -gff -a -s -pa 16 -dir \
 $GENOME.repmask.repbase/ $GENOME 
 
-/cluster/software/repeatmasker/util/buildSummary.pl -species teleostei \
+/cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
 $GENOME.repmask.repbase/*.out\
 	> $GENOME.repmask.repbase.summary
 
 #--------------------------------RepeatLandscape-----------------------------------------#
 
-perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
--s $GENOME.repmask.denovo/$GENOME.divsum $GENOME.repmask.denovo/*.align
+#	The createRepeatLandscape.pl script requires genome size estimates to create pie 
+#	charts. 
 
-perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
--div $GENOME.repmask.denovo/$GENOME.divsum -t "$GENOME denovo RepeatLandscape" \
-	> $GENOME.denovo.RL.html
+#	Getting genome size
 
+assemblathon_stats.pl -csv $GENOME | grep "Total size of scaffolds" | awk '{print $5}' \
+> genomesize
 
-perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
--s $GENOME.repmask.total/$GENOME.divsum $GENOME.repmask.total/*.align
-
-perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
--div $GENOME.repmask.total/$GENOME.divsum -t "$GENOME denovo + repbase RepeatLandscape" \
-	> $GENOME.total.RL.html
-	
-	
-perl /cluster/software/repeatmasker/util/calcDivergenceFromAlign.pl \
--s $GENOME.repmask.species/$GENOME.divsum $GENOME.repmask.species/*.align
-
-perl /cluster/software/repeatmasker/util/createRepeatLandscape.pl \
--div $GENOME.repmask.species/$GENOME.divsum -t "$GENOME -species RepeatLandscape" \
-	> $GENOME.species.RL.html
-
+sh $REPO/landscaping.sh $GENOME
 
 
 #---------------------------------Result parsing-----------------------------------------#
