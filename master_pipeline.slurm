@@ -594,45 +594,6 @@ python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.fasta -l \
 $GENOME.repeats.only_uniprot | fold -w 60 \
 	> $GENOME.repeats.srt.nr.no_uniprot
 
-#-----------------------Removing simple repeats designated as TEs------------------------#
-
-#	First splitting the library in elements found by tPSI and elements detected by other
-#	programs.
-
-fastagrep -i -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-	> $GENOME.denovolib_tPSI
-	
-fastagrep -i -v -p "TransposonPSI" $GENOME.repeats.srt.nr.no_uniprot \
-	> $GENOME.denovolib_non_tPSI
-
-#	The transposons designated as CACTA by tPSI are mostly simple repeats. These are 
-#	masked using TRF and then all sequences that were masked are filtered out. 
-
-fastagrep -i -p "/CACTA" $GENOME.denovolib_tPSI \
-	> $GENOME.denovolib_tPSI.CACTA_elements_only
-
-fastagrep -i -v -p "/CACTA" $GENOME.denovolib_tPSI \
-	> $GENOME.denovolib_tPSI.no_CACTA
-
-trf $GENOME.denovolib_tPSI.CACTA_elements_only \
-2 7 7 80 10 50 500 -h -m
-
-#	Output: $GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask
-
-#	Only keeping sequences that was not masked at all (cutoff = 1%)
-
-python2 $REPO/sequence_cleaner.py \
-$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 0 1
-
-#	Output: $clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask 
-
-#	Merging library:
-
-cat $GENOME.denovolib_tPSI.no_CACTA \
-clear_$GENOME.denovolib_tPSI.CACTA_elements_only.2.7.7.80.10.50.500.mask \
-$GENOME.denovolib_non_tPSI \
-	> $GENOME.final_denovo_lib
-
 #--------------------------BLASTX for classification-------------------------------------#
 
 blastx -query $GENOME.final_denovo_lib \
@@ -661,12 +622,43 @@ fastagrep -p "#Unknown" $GENOME.denovolib | fastagrep -p ">rnd" \
 
 #	Running nhmmscan to search for homology in Dfam.
 
-nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results \
---cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib 1> $GENOME.DFAM.out 
+gt splitfasta -num 10 $GENOME.repmod.unknowns.lib
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.1 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.1 1> $GENOME.DFAM.out.1 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.2 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.2 1> $GENOME.DFAM.out.2 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.3 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.3 1> $GENOME.DFAM.out.3 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.4 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.4 1> $GENOME.DFAM.out.4 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.5 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.5 1> $GENOME.DFAM.out.5 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.6 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.6 1> $GENOME.DFAM.out.6 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.7 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.7 1> $GENOME.DFAM.out.7 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.8 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.8 1> $GENOME.DFAM.out.8 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.9 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.9 1> $GENOME.DFAM.out.9 
+
+nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.10 \
+--cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.10 1> $GENOME.DFAM.out.10
+
+cat $GENOME.repmod.unknowns.dfam_results* > $GENOME.repmod.unknowns.all.dfam_results
 
 #	Running a set of python scripts to produce annotated versions of the libraries
 
-python2 $REPO/dfammer.py -i $GENOME.repmod.unknowns.dfam_results \
+python2 $REPO/dfammer.py -i $GENOME.repmod.unknowns.all.dfam_results \
 	> $GENOME.repmod.unknowns.dfam_tophits
 
 python2 $REPO/dfammer2.py -i $GENOME.repmod.unknowns.dfam_tophits \
@@ -692,11 +684,22 @@ cat $GENOME.repmod.unknowns.dfam_classified.lib \
 $GENOME.denovolib.no_classifiable_unknowns \
 	> $GENOME.denovolib.classifed
 
+#-----------------------Removing simple repeats designated as TEs------------------------#
+
+#	Elements designated as CACTA DNA transposons by tPSI will only be part of the library
+#	if supported by two sources.
+
+fastagrep -v -p "   " $GENOME.denovolib.classifed | fastagrep -p "/CACTA" | grep ">" \
+	> list_of_CACTAS
+
+fastagrep -v -f list_of_CACTAS $GENOME.denovolib.classifed 
+	> $GENOME.denovolib.classifed.final
+
 #--------------------------------RepeatMasker------------------------------------------#
 
 #	Creating a total repeat library
 
-cat $GENOME.denovolib.classifed $REPO/repbase.update.04102015.teleostei.lib \
+cat $GENOME.denovolib.classifed.final $REPO/repbase.update.04102015.teleostei.lib \
 > $GENOME.total.repeat.library
 
 #Making folders for each library
@@ -708,7 +711,7 @@ mkdir $GENOME.repmask.species
 
 #RepeatMasking and creating summaries
 
-RepeatMasker -lib $GENOME.denovolib.classifed -gff -a -s -pa 16 -dir \
+RepeatMasker -lib $GENOME.denovolib.classifed.final -gff -a -s -pa 16 -dir \
 $GENOME.repmask.denovo/ $GENOME
 
 /cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
