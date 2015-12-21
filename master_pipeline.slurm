@@ -23,7 +23,6 @@ export REPO=/work/users/willibr/testing/repository
 
 #	Databases:
 #	eukaryotic-tRNAs.fa
-#	repbase.update.04102015.teleostei.lib
 #	uniprot_sprot17nov2015.fasta
 #	RepeatPeps.lib
 #	TEseeker.DNAtransposons.fasta
@@ -480,19 +479,33 @@ python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.TRIM85.lib \
 python2 $REPO/reprint.ltrharvest.lib.new.py -i $GENOME.TRIM99.lib \
 --name TRIM99 > $GENOME.TRIM99.renamed.lib
 
-#Merging each group
+#	Merging each group
 
 cat $GENOME.TRIM99.renamed.lib $GENOME.TRIM85.renamed.lib $GENOME.retro99.renamed.lib \
 $GENOME.retro85.renamed.lib \
 	> $GENOME.retrotransposons.TRIMs.lib
 
-#Trying to classify the consensus sequences using RepeatClassifier
+#################################
+#	Removal of excess files  
+
+rm $GENOME.sds $GENOME.md5 $GENOME.esq $GENOME.des $GENOME.csv $GENOME.suf $GENOME.prj
+rm $GENOME.llv $GENOME.lcp $GENOME.N50* formatdb.log error.log *.masked
+rm $GENOME.TRIM* $GENOME.retro99*  $GENOME.retro85* *.dgt *.sort *Passed*
+rm -r retro85 TRIM85 retro99 TRIM99 *fasta_files
+rm $GENOME.retrotransposons.result99 $GENOME.retrotransposons.outinner99*
+rm $GENOME.retrotransposons.out99 retrotransposons.gff99
+rm $GENOME.retrotransposons.result85 $GENOME.retrotransposons.outinner85*
+rm $GENOME.retrotransposons.out85 $GENOME.retrotransposons.gff85 *withdomains*
+#################################
+
+
+#	Trying to classify the consensus sequences using RepeatClassifier
 
 RepeatClassifier -consensi $GENOME.retrotransposons.TRIMs.lib -engine ncbi
 
-#Output is $GENOME.retrotransposons.TRIMs.lib.classified.
-#Elements classified as simple repeats, buffers or unknowns are reclassified into the
-#LTR superfamily using sed. 
+#	Output is $GENOME.retrotransposons.TRIMs.lib.classified.
+#	Elements classified as simple repeats, buffers or unknowns are reclassified into the
+#	LTR superfamily using sed. 
 
 sed 's/#Simple_repeat/#LTR\/Unknown/g' \
 $GENOME.retrotransposons.TRIMs.lib.classified | \
@@ -502,10 +515,15 @@ sed 's/#DNA.*/#LTR\/Unknown/g' | \
 sed 's/LINE.*/#LTR\/Unknown/g' \
 	> $GENOME.retrotransposons.TRIMs.lib.classified.reclassified
 
+#################################
+#	Removal of excess files  
+
+rm $GENOME.retrotransposons.TRIMs.lib.classified
+#################################
 
 #-------------------------------tPSI FASTA extraction------------------------------------#
 
-#In order to extract sequences from the TransposonPSI file, files had to be altered
+#	In order to extract sequences from the TransposonPSI file, files had to be altered
 cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
 sed 's/;.*//g' | column -t | awk '{print $4}' \
 	> tPSI.classes
@@ -519,16 +537,23 @@ awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 \
 sed 's/ /\t/g' tmp5 \
 	> tmp6
 
-#The actual extraction done using bedtools (getfasta)
+#	The actual extraction done using bedtools (getfasta)
 
 bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
 
-#The TransposonPSI library is classified according to protein homology
+#	The TransposonPSI library is classified according to protein homology
 python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
 	> $GENOME.tPSI.classified.fasta
 
+#################################
+#	Removal of excess files  
+
+rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3 
+rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
+#################################
+
 #---------------------------------Clustering---------------------------------------------#
-#Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
+#	Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
 
 $CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
 -c 0.8 -T 16 -n 5
@@ -546,7 +571,7 @@ $GENOME.tPSI.classified.fasta.nr.80.n5 | fold -w 60 > $GENOME.repeats.fasta
 
 #---------------------------Removing false positives-------------------------------------#
 
-#Removing false transposons by checking against SwissProt-UniProt. TIME: ~1 hour 
+#	Removing false transposons by checking against SwissProt-UniProt. TIME: ~1 hour 
 
 blastx -query $GENOME.repeats.fasta \
 -db $REPO/uniprot_sprot17nov2015.fasta -num_threads 10 -evalue 1e-5 -max_target_seqs 50 \
@@ -594,24 +619,39 @@ python2 $REPO/reprint.filtered.lib.py -i $GENOME.repeats.fasta -l \
 $GENOME.repeats.only_uniprot | fold -w 60 \
 	> $GENOME.repeats.srt.nr.no_uniprot
 
+#################################
+#	Removal of excess files  
+
+rm *blastx*
+rm *repeats.only_uniprot
+rm *repeats.only_repeatpeps
+#################################
+
 #--------------------------BLASTX for classification-------------------------------------#
 
-blastx -query $GENOME.final_denovo_lib \
+blastx -query $GENOME.repeats.srt.nr.no_uniprot \
 -db $REPO/RepeatPeps.lib -num_threads 10 -evalue 1e-5 -max_target_seqs 1 -outfmt \
 '6 bitscore length pident qseqid sacc' | awk '{print $5," ",$4," ",$1," ",$2," ",$3}' \
 	> $GENOME.ClassificationScheme
 
 python2 $REPO/classifier.py -i \
-$GENOME.final_denovo_lib -c $GENOME.ClassificationScheme \
+$GENOME.repeats.srt.nr.no_uniprot -c $GENOME.ClassificationScheme \
 	> $GENOME.classified_repeats.fasta
 
 awk '{print $2}' $GENOME.classified_repeats.fasta | grep "#" > list_to_fastagrep
 
-fastagrep -v -f list_to_fastagrep $GENOME.final_denovo_lib \
+fastagrep -v -f list_to_fastagrep $GENOME.repeats.srt.nr.no_uniprot \
 	> $GENOME.non_classified_repeats.fasta
 
 cat $GENOME.non_classified_repeats.fasta $GENOME.classified_repeats.fasta \
 	> $GENOME.denovolib
+
+#################################
+#	Removal of excess files  
+
+rm $GENOME.ClassificationScheme $GENOME.classified_repeats.fasta list_to_fastagrep
+rm $GENOME.non_classified_repeats.fasta
+#################################
 
 #-----------------------------HMMR classification of "Unknowns"--------------------------#
 
@@ -622,7 +662,7 @@ fastagrep -p "#Unknown" $GENOME.denovolib | fastagrep -p ">rnd" \
 
 #	Running nhmmscan to search for homology in Dfam.
 
-gt splitfasta -num 10 $GENOME.repmod.unknowns.lib
+gt splitfasta -numfiles 10 $GENOME.repmod.unknowns.lib
 
 nhmmscan --noali --cut_tc --dfamtblout $GENOME.repmod.unknowns.dfam_results.1 \
 --cpu=16 $REPO/Dfam.hmm $GENOME.repmod.unknowns.lib.1 1> $GENOME.DFAM.out.1 
@@ -682,36 +722,52 @@ sed -i '/^$/d' $GENOME.repmod.unknowns.dfam_classified.lib
 
 cat $GENOME.repmod.unknowns.dfam_classified.lib \
 $GENOME.denovolib.no_classifiable_unknowns \
-	> $GENOME.denovolib.classifed
+	> $GENOME.denovolib.classified
+	
+#################################
+#	Removal of excess files  
+
+rm *DFAM* $GENOME.repmod.unknowns.lib $GENOME.repmod.unknowns.all.dfam_results
+rm $GENOME.repmod.unknowns.dfam_tophits $GENOME.repmod.unknowns.annotated.list
+rm $GENOME.repmod.unknowns.annotated.list.to_fastagrep 
+rm $GENOME.repmod.unknowns.dfam_classified.lib $GENOME.denovolib.no_classifiable_unknowns
+#################################
 
 #-----------------------Removing simple repeats designated as TEs------------------------#
 
-#	Elements designated as CACTA DNA transposons by tPSI will only be part of the library
-#	if supported by two sources.
-
-fastagrep -v -p "   " $GENOME.denovolib.classifed | fastagrep -p "/CACTA" | grep ">" \
-	> list_of_CACTAS
-
-fastagrep -v -f list_of_CACTAS $GENOME.denovolib.classifed 
-	> $GENOME.denovolib.classifed.final
+# Elements designated as CACTA DNA transposons by tPSI will only be part of the library
+# if supported by two sources.
+# 
+# fastagrep -v -p "   " $GENOME.denovolib.classified | fastagrep -p "/CACTA" | grep ">" \
+# 	> list_of_CACTAS
+# 
+# fastagrep -v -f list_of_CACTAS $GENOME.denovolib.classified
+# 	> $GENOME.denovolib.classified.final
+# 
+# 
+# ################################
+# Removal of excess files  
+# 
+# rm list_of_CACTAS
+# rm $GENOME.denovolib.classified 
+# ################################
 
 #--------------------------------RepeatMasker------------------------------------------#
 
 #	Creating a total repeat library
 
-cat $GENOME.denovolib.classifed.final $REPO/repbase.update.04102015.teleostei.lib \
+cat $GENOME.denovolib.classified $REPO/RepBase_for_RepeatMasker.20150807.eukaryotes \
 > $GENOME.total.repeat.library
 
-#Making folders for each library
+#	Making folders for each library
 
 mkdir $GENOME.repmask.denovo
 mkdir $GENOME.repmask.total
 mkdir $GENOME.repmask.repbase
-mkdir $GENOME.repmask.species
 
-#RepeatMasking and creating summaries
+#	RepeatMasking and creating summaries
 
-RepeatMasker -lib $GENOME.denovolib.classifed.final -gff -a -s -pa 16 -dir \
+RepeatMasker -lib $GENOME.denovolib.classified -gff -a -s -pa 16 -dir \
 $GENOME.repmask.denovo/ $GENOME
 
 /cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
@@ -726,18 +782,10 @@ $GENOME.repmask.total/*.out \
 	> $GENOME.repmask.total.summary
 
 RepeatMasker -species eukaryota -gff -a -s -pa 16 -dir \
-$GENOME.repmask.species/ $GENOME 
-
-/cluster/software/VERSIONS/repeatmasker-4.0.6/util/ -species teleostei \
-$GENOME.repmask.species/*.out \
-	> $GENOME.repmask.species_eukaryota.summary
-
- 
-RepeatMasker -lib $REPO/repbase.update.04102015.teleostei.lib -gff -a -s -pa 16 -dir \
 $GENOME.repmask.repbase/ $GENOME 
 
 /cluster/software/VERSIONS/repeatmasker-4.0.6/util/buildSummary.pl -species teleostei \
-$GENOME.repmask.repbase/*.out\
+$GENOME.repmask.repbase/*.out \
 	> $GENOME.repmask.repbase.summary
 
 #--------------------------------RepeatLandscape-----------------------------------------#
@@ -767,10 +815,4 @@ cd $GENOME.repmask.repbase
 sh $REPO/get.rm.master.sh $GENOME
 cd ..
 
-cd $GENOME.repmask.species
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
-
-#----------------------------------iPython Notebook--------------------------------------#
-
-#	Idea: files in the result parsing can be arguments to a finished notebook
+#------------------------------------End of pipeline-------------------------------------#
