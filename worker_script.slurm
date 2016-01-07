@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --job-name=worker
 #SBATCH --account=nn9244k
-#SBATCH --time=120:0:0
+#SBATCH --time=168:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=16
 
@@ -54,8 +54,9 @@ if [ $TASK_ID == 1 ]; then
 #################################
 #	Removal of excess files  
 
-	rm N50				
-	rm $GENOME.N50			
+	rm N50 $GENOME.N50
+	rm -r RM*/round* 
+	rm RM*/*masked RM*/consensi.fa 
 #################################
 	
 elif [ $TASK_ID == 2 ]; then
