@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --job-name=pipeline
 #SBATCH --account=nn9244k
-#SBATCH --time=1:0:0
+#SBATCH --time=168:0:0
 #SBATCH --mem-per-cpu=3000M 
 #SBATCH --cpus-per-task=16
 
@@ -9,54 +9,70 @@ if [ -n "$SLURM_JOB_ID" ]; then
     # running in a slurm job
     source /cluster/bin/jobsetup
 fi
-# Mail at beginning/end/on suspension
-#SBATCH --mail-user=williambrynildsen@gmail.com
-#SBATCH --mail-type=ALL
+
+module purge
+
+TMP=$LOCALTMP
+TMPDIR=/work/users/willibr/tmp
+
+mkdir -p repeats
+
+species=${1%}
+origdir=$PWD
+
+mkdir -p repeats/${species}
+echo ${species}
+
+mkdir ${TMPDIR}/${species}_repeats
+cd ${TMPDIR}/${species}_repeats
+
+cp $origdir/repeats_worker_script.slurm ${TMPDIR}/${species}_repeats
+cp $origdir/$1 ${TMPDIR}/${species}_repeats
 
 #------------------------------Pointing to paths-----------------------------------------#
 
 #	The repository contains databases and scripts used during the pipeline.
 
-export REPO=/work/users/willibr/testing/repository
+export REPO=/projects/cees/in_progress/william/pipeline/repository$
 
 #---Content of the repository:
 
 #	Databases:
-#	eukaryotic-tRNAs.fa
+#	eukaryotic-tRNAs.fa !
 #	uniprot_sprot17nov2015.fasta
-#	RepeatPeps.lib
-#	TEseeker.DNAtransposons.fasta
+#	RepeatPeps.lib !
+#	TEseeker.DNAtransposons.fasta !
 
 #	Python scripts (only tested in python2/2.7.9):
-#	change_headers_to_seqN.py
-#	reprint.tPSI.lib.py
-#	reprint.ltrharvest.lib.py
-#	reprint.ltrharvest.lib.new.py
-#	reprint.filtered.lib.py
-#	sequence_cleaner.py
-#	N50.py
-#	reprint.genome.py
+#	change_headers_to_seqN.py (retrived from github)
+#	reprint.tPSI.lib.py (retrived from github)
+#	reprint.ltrharvest.lib.py (retrived from github)
+#	reprint.ltrharvest.lib.new.py !
+#	reprint.filtered.lib.py (retrived from github)
+#	sequence_cleaner.py !
+#	N50.py !
+#	reprint.genome.py !
 
 #	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang):
 #	TRIM99.CRL_Step1.pl
 #	TRIM85.CRL_Step1.pl
 #	retro99.CRL_Step1.pl
 #	retro85.CRL_Step1.pl
-#	CRL_Step2.pl
-#	CRL_Step3.pl
-#	CRL_Step4.pl
-#	CRL_Step5.pl
-#	ltr_library.pl
+#	CRL_Step2.pl 
+#	CRL_Step3.pl 
+#	CRL_Step4.pl !
+#	CRL_Step5.pl ! 
+#	ltr_library.pl !
 
 #	RepeatMasker parsing:
-#	get.rm.master.sh
-#	get.rm.stats.sh
-#	get.rm.stats.rename.sh
-#	get.rm.overview.sh
+#	get.rm.master.sh !
+#	get.rm.stats.sh !
+#	get.rm.stats.rename.sh !
+#	get.rm.overview.sh !
 
 #	Misc:
-#	assemblathon_stats.pl
-#	filter_protein_match.lua
+#	assemblathon_stats.pl !	
+#	filter_protein_match.lua !
 
 #	The only parameter given the pipeline is a FASTA file of the genome.
 
@@ -84,10 +100,10 @@ module load repeatmasker/4.0.6
 module load bedtools/2.17.0
 module load cd-hit/4.6.4
 
-#------------------------------Genome index table----------------------------------------#
-#	NB! Genome FASTA headers must not contain any special characters (only letters and/or 
-#	numbers).
-
+# #------------------------------Genome index table----------------------------------------#
+# #	NB! Genome FASTA headers must not contain any special characters (only letters and/or 
+# #	numbers).
+# 
 #	Renaming headers (to SEQ0, SEQ1, SEQ2 etc.)
 python2 $REPO/reprint.genome.py -i $GENOME > $GENOME.seq
 
@@ -108,7 +124,7 @@ GENOME=$GENOME.seq
 
 #	Starting LTRharvest/LTRdigest, RepeatModeler and TransposonPSI
 
-arrayrun 1-3 worker_script.slurm $REPO $GENOME $tPSI $CDHIT 
+arrayrun 1,3 repeats_worker_script.slurm $REPO $GENOME $tPSI $CDHIT 
 
 wait
 
@@ -496,39 +512,39 @@ sed 's/LINE.*/#LTR\/Unknown/g' \
 #-------------------------------tPSI FASTA extraction------------------------------------#
 
 #	In order to extract sequences from the TransposonPSI file, files had to be altered
-cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
-sed 's/;.*//g' | column -t | awk '{print $4}' \
-	> tPSI.classes
-
-paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t \
-	> tmp4
-
-awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 \
-	> tmp5
-
-sed 's/ /\t/g' tmp5 \
-	> tmp6
-
-#	The actual extraction done using bedtools (getfasta)
-
-bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
-
-#	The TransposonPSI library is classified according to protein homology
-python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
-	> $GENOME.tPSI.classified.fasta
-
-#################################
-#	Removal of excess files  
-
-rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3  tPSI.log
-rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
+# cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
+# sed 's/;.*//g' | column -t | awk '{print $4}' \
+# 	> tPSI.classes
+# 
+# paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t \
+# 	> tmp4
+# 
+# awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 \
+# 	> tmp5
+# 
+# sed 's/ /\t/g' tmp5 \
+# 	> tmp6
+# 
+# #	The actual extraction done using bedtools (getfasta)
+# 
+# bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
+# 
+# #	The TransposonPSI library is classified according to protein homology
+# python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
+# 	> $GENOME.tPSI.classified.fasta
+# 
+# #################################
+# #	Removal of excess files  
+# 
+# rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3  tPSI.log
+# rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
 #################################
 
 #---------------------------------Clustering---------------------------------------------#
 #	Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
 
-$CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
--c 0.8 -T 16 -n 5
+# $CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
+# -c 0.8 -T 16 -n 5
 
 #--------------------------------Merging of libraries------------------------------------#
 
@@ -679,20 +695,7 @@ cat $GENOME.repmod.unknowns.dfam_classified.lib \
 $GENOME.denovolib.no_classifiable_unknowns \
 	> $GENOME.denovolib.classified
 
-#-----------------------Removing simple repeats designated as TEs------------------------#
-
-#	Elements designated as CACTA DNA transposons by tPSI will only be part of the library
-#	if supported by two sources.
-
-fastagrep -v -p "   " $GENOME.denovolib.classified | fastagrep -p "/CACTA" | grep ">" \
-	> list_of_CACTAS
-
-fastagrep -v -f list_of_CACTAS $GENOME.denovolib.classified
-	> $GENOME.denovolib.classified.2
-
-cat $GENOME.denovolib.classified.2 > $GENOME.denovolib.classified
-
-#--------------------------------RepeatMasker------------------------------------------#
+--------------------------------RepeatMasker------------------------------------------#
 
 #	Creating a total repeat library
 
@@ -790,3 +793,5 @@ sh $REPO/get.rm.master.sh $GENOME
 cd ..
 
 #------------------------------------End of pipeline-------------------------------------#
+
+rsync -ravz * ${origdir}/repeats/${species} 
