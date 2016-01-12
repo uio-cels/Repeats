@@ -33,7 +33,7 @@ cp $origdir/$1 ${TMPDIR}/${species}_repeats
 
 #	The repository contains databases and scripts used during the pipeline.
 
-export REPO=/projects/cees/in_progress/william/pipeline/repository$
+export REPO=/projects/cees/in_progress/william/pipeline/repository
 
 #---Content of the repository:
 
@@ -124,7 +124,7 @@ GENOME=$GENOME.seq
 
 #	Starting LTRharvest/LTRdigest, RepeatModeler and TransposonPSI
 
-arrayrun 1,3 repeats_worker_script.slurm $REPO $GENOME $tPSI $CDHIT 
+arrayrun 1-3 repeats_worker_script.slurm $REPO $GENOME $tPSI $CDHIT 
 
 wait
 
@@ -511,40 +511,40 @@ sed 's/LINE.*/#LTR\/Unknown/g' \
 
 #-------------------------------tPSI FASTA extraction------------------------------------#
 
-#	In order to extract sequences from the TransposonPSI file, files had to be altered
-# cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
-# sed 's/;.*//g' | column -t | awk '{print $4}' \
-# 	> tPSI.classes
-# 
-# paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t \
-# 	> tmp4
-# 
-# awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 \
-# 	> tmp5
-# 
-# sed 's/ /\t/g' tmp5 \
-# 	> tmp6
-# 
-# #	The actual extraction done using bedtools (getfasta)
-# 
-# bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
-# 
-# #	The TransposonPSI library is classified according to protein homology
-# python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
-# 	> $GENOME.tPSI.classified.fasta
-# 
-# #################################
-# #	Removal of excess files  
-# 
-# rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3  tPSI.log
-# rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
+In order to extract sequences from the TransposonPSI file, files had to be altered
+cut -f 1,4,5,9 $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | sed 's/ID=.*Target.//g' | \
+sed 's/;.*//g' | column -t | awk '{print $4}' \
+	> tPSI.classes
+
+paste tPSI.classes $GENOME.TPSI.allHits.chains.bestPerLocus.gff3 | column -s $'\t' -t \
+	> tmp4
+
+awk '{print $2,$3,$1,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16}' tmp4 \
+	> tmp5
+
+sed 's/ /\t/g' tmp5 \
+	> tmp6
+
+#	The actual extraction done using bedtools (getfasta)
+
+bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
+
+#	The TransposonPSI library is classified according to protein homology
+python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
+	> $GENOME.tPSI.classified.fasta
+
 #################################
+#	Removal of excess files  
 
-#---------------------------------Clustering---------------------------------------------#
-#	Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
+rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3  tPSI.log
+rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
+################################
 
-# $CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
-# -c 0.8 -T 16 -n 5
+---------------------------------Clustering---------------------------------------------#
+Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
+
+$CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
+-c 0.8 -T 16 -n 5
 
 #--------------------------------Merging of libraries------------------------------------#
 
@@ -743,6 +743,20 @@ assemblathon_stats.pl -csv $GENOME | grep "Total size of scaffolds" | awk '{prin
 
 sh $REPO/landscaping.sh $GENOME
 
+#---------------------------------Result parsing-----------------------------------------#
+
+cd $GENOME.repmask.total/
+sh $REPO/get.rm.master.sh $GENOME
+cd ..
+
+cd $GENOME.repmask.denovo/
+sh $REPO/get.rm.master.sh $GENOME
+cd ..
+
+cd $GENOME.repmask.repbase
+sh $REPO/get.rm.master.sh $GENOME
+cd ..
+
 ################################
 #	Removal of excess files  
 
@@ -777,20 +791,6 @@ rm unaligned.fa
 rm halfoftable1					
 rm halfoftable2	
 ################################
-
-#---------------------------------Result parsing-----------------------------------------#
-
-cd $GENOME.repmask.total/
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
-
-cd $GENOME.repmask.denovo/
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
-
-cd $GENOME.repmask.repbase
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
 
 #------------------------------------End of pipeline-------------------------------------#
 
