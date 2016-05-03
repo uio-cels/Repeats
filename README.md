@@ -12,7 +12,7 @@ sbatch repeats_master_pipeline.slurm genome.fasta
 
 The pipeline runs around a week on medium sizes genomes (0.4 - 1.5 Gb).
 
-In addition, the data analysis steps for production of the figures can be found here and part of the DataFrames can be found (unfortunately they are too big to be shared entirely). 
+In addition, the data analysis steps for making the figures can be found in 'notebooks'. Parts of the data frames that were analyzed can be found in 'data' (unfortunately some are too big to be shared entirely). 
 
 ![FlowChart_overwiev](https://github.com/uio-cels/Repeats/blob/master/figures/overview_flowchart.png)
 
