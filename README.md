@@ -14,7 +14,7 @@ The pipeline runs around a week on medium sizes genomes (0.4 - 1.5 Gb).
 
 In addition, the data analysis steps for production of the figures can be found here and part of the DataFrames can be found (unfortunately they are too big to be shared entirely). 
 
-![FlowChart_overwiev](Repeats/figures/overview_flowchart.png)
+![FlowChart_overwiev](https://github.com/uio-cels/Repeats/blob/master/figures/overview_flowchart.png)
 
 
 
