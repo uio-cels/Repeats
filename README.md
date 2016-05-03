@@ -2,7 +2,7 @@
 
 Here, I provide the scripts used in the computational pipeline for detecting and classifying transposable elements (TEs). An outline of the pipeline can be seen in the figure below 
 
-![](https://github.com/uio-cels/Repeats/blob/master/figures/FlowChart_pipeline.pdf)
+![](Repeats/figures/FlowChart_pipeline.pdf)
 
 The scripts used for creating species-specific libraries of TEs are called 'repeats\_master\_pipeline.slurm' and 'repeats\_worker\_script.slurm' and is run like this:
 
