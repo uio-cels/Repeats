@@ -1,0 +1,144 @@
+fish_1	Gadiformes	Arctogadus glacialis	Arctic cod
+fish_2	Gadiformes	Boreogadus saida	Polar cod
+fish_3	Gadiformes	Trisopterus minutus	Poor cod
+fish_4	Gadiformes	Pollachius virens	Saithe
+fish_5	Gadiformes	Melanogrammus aeglefinus	Haddoc
+fish_6	Gadiformes	Merlangius merlangus	Whiting
+fish_7	Gadiformes	Theragra chalcogramma	Alaska pollock
+fish_8	Gadiformes	Gadiculus argenteus	Silvercod
+fish_9	Gadiformes	Phycis phycis	Forkbeard
+fish_10	Gadiformes	Molva molva	Ling
+fish_11	Gadiformes	Lota lota	Burbot
+fish_12	Gadiformes	Brosme brosme	Cusk
+fish_13	Gadiformes	Merluccius merluccius	Hake
+fish_14	Gadiformes	Merluccius capensis	Shallow-water Cape hake
+fish_15	Gadiformes	Merluccius polli	Black hake
+fish_16	Gadiformes	Melanonus zugmayeri	Arrowtail
+fish_17	Gadiformes	Macrourus berglax	Roughhead grenadier
+fish_18	Gadiformes	Malacocephalus occidentalis	Western softhead grenadier
+fish_19	Gadiformes	Bathygadus melanobranchus	Vaillants grenadier
+fish_20	Gadiformes	Muraenolepis marmoratus	Marbled moray cod
+fish_21	Gadiformes	Bregmaceros cantori	Striped codlet
+fish_22	Gadiformes	Mora moro	Common mora
+fish_23	Gadiformes	Laemonema laureysi	Guinean codling
+fish_24	Polymyxiformes	Polymixia japonica	Silver eye beardfish
+fish_26	Percopsiformes	Percopsis transmontana	Sandroller
+fish_27	Percopsiformes	Typhlichthys subterraneus	Southern cavefish
+fish_28	Zeiformes	Zeus faber	John dory
+fish_29	Zeiformes	Zenopsis conchifer	Silvery john dory
+fish_30	Zeiformes	Cyttopsis roseus	Red dory
+fish_31	Ophidiiformes	Lamprogrammus exutus	Legless cusk eel
+fish_32	Ophidiiformes	Brotula barbata	Bearded brotula
+fish_33	Ophidiiformes	Carapus acus	Pearl fish
+fish_34	Beryciformes	Myripristis jacobus	Blackbar soldierfish
+fish_35	Beryciformes	Holocentrus rufus	Longspine squirrelfish
+fish_36	Gadiformes	Trachyrincus scabrus	Roughsnout grenadier
+fish_37	Beryciformes	Gephyroberyx darwini	Darwinian slimehead
+fish_38	Stephanoberyciformes	Melamphaidae sp.	Melamphaidae sp.
+fish_39	Batrachoidiformes	Perulibatrachus rossignoli	Rossignol toadfish
+fish_40	Batrachoidiformes	Chatrabus melanurus	Pony toadfish
+fish_41	Batrachoidiformes	Opsanus beta	Gulf toadfish
+fish_42	Aulopiformes	Parasudis fraserbrunneri	Tripodfish
+fish_44	Aulopiformes	Saurida brasiliensis	Brazilian lizardfish
+fish_45	Aulopiformes	Synodus synodus	Diamond lizardfish
+fish_47	Lampriformes	Regalecus glesne	King of herring
+fish_48	Lampriformes	Lampris guttauts	Opah
+fish_49	Lampriformes	Lophotus capellei	Unicornfish
+fish_50	Ateleopodiformes	Guentherus altivela	Jellynose
+fish_51	Lophiiformes	Lophius vaillanti	Shortspine African angler
+fish_52	Lophiiformes	Antennarius striatus	Striated frogfish
+fish_54	Osmeriformes	Osmerus eperlanus	European smelt
+fish_55	Perciformes	Perca fluviatilis	European perch
+fish_56	Scorpaeniformes	Sebastes norvegicus	Golden redfish
+fish_57	Notothenioidei	Eleginops maclovinus	Patagonian blennie
+fish_58	Notothenioidei	Patagonotothen guntheri	Yellowfin notothen
+fish_59	Notothenioidei	Trematomus newnesi	Dusky rockcod
+fish_60	Notothenioidei	Pleuragramma antarctica	Antarctic silverfish
+fish_61	Notothenioidei	Chaenocephalus aceratus	Blackfin icefish
+fish_62	Notothenioidei	Artedidraco skottsbergi	Antarctic plunderfish
+fish_63	Notothenioidei	Harpagifer kerguelensis	Kerguelen spiny plunderfish
+fish_64	Notothenioidei	Gymnodraco acuticeps	Ploughfish
+fish_65	Stomiformes	Borostomias antarcticus	Snaggletooth
+fish_66	Myctophiformes	Benthosema glaciale	Glacier lantern fish
+fish_67	Cetomimiformes	Cetomimus sp	Cetomimus sp
+fish_68	Cetomimiformes	Rondeletia loricata	Redmouth whalefish
+fish_69	Beryciformes	Beryx splendens	Splendid alfonsino
+fish_70	Beryciformes	Neoniphon sammara	Sammara squirrelfish
+fish_71	Beryciformes	Anoplogaster cornuta	Common fangtooth
+fish_72	Beryciformes	Diretmus argenteus	Silver spinyfin
+fish_73	Beryciformes	Diretmoides pauciradiatus	Longwing spinyfin
+fish_74	Beryciformes	Monocentris japonica	Pinecone fish
+fish_75	Beryciformes	Gephyroberyx darwini 	Darwin's slimehead
+fish_76	Beryciformes	Hoplostethus atlanticus	Orange roughy
+fish_77	Stephanoberyciformes	Poromitra crassiceps	Crested bigscale
+fish_78	Stephanoberyciformes	Scopelogadus beanii	Bean's bigscale
+fish_79	Stephanoberyciformes	Acanthochaenus luetkenii	Pricklefish
+fish_80	Stylephoriformes	Stylephorus chordatus	Tube-eye or thread-tail
+fish_81	Perciformes	Spondyliosoma cantharus	Black seabream
+fish_82	Perciformes	Rhyacichthys aspro	Loach goby
+fish_83	Perciformes	Thunnus albacares	Yellowfin tuna
+fish_84	Perciformes	Helostoma temminckii	Kissing gouramis
+fish_85	Perciformes	Anabas testudineus	Climbing perch
+fish_86	Perciformes	Selene dorsalis	African moonfish
+fish_87	Perciformes	Chromis chromis	Damselfish 
+fish_88	Perciformes	Parablennius parvicornis	Rock-pool blenny
+fish_89	Perciformes	Symphodus melops	Corkwing wrasse
+fish_90	Perciformes	Pseudochromis fuscus	Brown dottyback
+fish_91	Scorpaeniformes	Myoxocephalus scorpius	Shorthorn sculpin
+fish_92	Gadiformes	Raniceps raninus	Tadpolefish
+fish_93	Gadiformes	Coryphaenoides rupestris	Roundnose grenadier
+fish_94	Gadiformes	Trachyrincus murrayi	Murray´s longsnout grenadier
+fish_95	Gadiformes	Phycis blennoides	Greater forkbeard
+fish_96	Perciformes	Lesueurigobius cf. sanzoi	Sanzo's goby
+fish_97	Gadiformes	Gadus morhua	Atlantic cod
+fish_98	Perciformes	Caranx ignobilis	Giant trevally
+fish_99	Perciformes	Caranx melampygus	Bluefin trevally
+fish_100	Clupeiformes	Clupea harengus	Atlantic herring
+fish_101	Cypriniformes	Cyprinus carpio	Common carp
+fish_102	Gymnotiformes	Electrophorus electricus	Electric eel
+fish_103	Perciformes	Epinephelus aeneus	White grouper
+fish_104	Synbranchiformes	Monopterus albus	Swamp eel
+fish_105	Salmoniformes	Oncorhynchus tshawytscha	Chinook salmon
+fish_106	Cypriniformes	Pimephales promelas	Fathead minnow
+fish_107	Salmoniformes	Salmo salar	Atlantic salmon
+fish_108	Pleuronectiformes	Cynoglossus semilaevis	Tongue sole
+fish_109	Cypriniformes	Danio rerio	Zebrafish
+fish_110	Esociformes	Esox lucius	Northern pike
+fish_111	Lepisosteiformes	Lepisosteus oculatus	Spotted gar
+fish_112	Beloniformes	Oryzias latipes	Medaka
+fish_113	Tetraodontiformes	Takifugu rubripes	Japanese puffer
+fish_114	Perciformes	Amphilophus citrinellus	Midas cichlid
+fish_115	Gasterosteiformes	Gasterosteus aculeatus	Three-spined stickleback
+fish_116	Pleuronectiformes	Pseudopleuronectes yokohamae	Marbled flounder
+fish_117	Tetraodontiformes	Tetraodon nigroviridis	Green spotted puffer
+fish_118	Perciformes	Thunnus orientalis	Pacific bluefin tuna
+fish_119	Tetraodontiformes	Takifugu flavidus	Yellowbelly pufferfish
+fish_120	Anguilliformes	Anguilla anguilla	European eel 
+fish_121	Anguilliformes	Anguilla japonica	Japanese eel 
+fish_122	Perciformes	Astatotilapia burtoni	Astatotilapia burtoni
+fish_123	Characiformes	Astyanax mexicanus	Blind cave fish
+fish_124	Perciformes	Boleophthalmus pectinirostris	Great blue spotted mudskipper
+fish_125	Cyprinodontiformes	Cyprinodon variegatus	Sheepshead minnow
+fish_126	Cyprinodontiformes	Cyprinodon nevadensis	Amargosa pupfish
+fish_127	Perciformes	Dicentrarchus labrax	European seabass
+fish_128	Perciformes	Larimichthys crocea	Croceine croaker
+fish_129	Perciformes	Maylandia zebra	Zebra mbuna
+fish_130	Perciformes	Neolamprologus brichardi	Princess cichlid
+fish_131	Perciformes	Notothenia coriiceps	Black rockcod
+fish_132	Perciformes	Oreochromis niloticus	Nile tilapia 
+fish_133	Perciformes	Periophthalmodon schlosseri	Giant mudskipper
+fish_134	Perciformes	Periophthalmus magnuspinnatus	Periophthalmus magnuspinnatus
+fish_135	Cyprinodontiformes	Poecilia formosa	Amazon molly
+fish_136	Cyprinodontiformes	Poecilia reticulata	Guppy
+fish_137	Perciformes	Pundamilia nyererei	Pundamilia nyererei
+fish_138	Perciformes	Scartelaos histophorus	Walking goby
+fish_139	Scorpaeniformes	Sebastes nigrocinctus	Tiger rockfish
+fish_140	Perciformes	Stegastes partitus	Bicolor damselfish
+fish_141	Cyprinodontiformes	Xiphophorus maculatus	Southern platyfish
+fish_142	Osteoglossiformes	Scleropages formosus	Asian arowana
+fish_143	Cyprinodontiformes	Fundulus heteroclitus	Mummichog
+fish_144	Syngnathiformes	Syngnathus typhle	Broadnosed pipefish 
+fish_145	Salmoniformes	Thymallus thymallus	Grayling
+fish_146	Gasterosteiformes	Pungitius pungitius	Ninespine stickleback
+fish_147	Salmoniformes	Oncorhynchus mykiss	Rainbow trout
+fish_148	Perciformes	Labrus bergylta	Ballan wrasse
