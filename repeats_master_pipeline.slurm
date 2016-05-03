@@ -38,41 +38,39 @@ export REPO=/projects/cees/in_progress/william/pipeline/repository
 #---Content of the repository:
 
 #	Databases:
-#	eukaryotic-tRNAs.fa !
-#	uniprot_sprot17nov2015.fasta
-#	RepeatPeps.lib !
-#	TEseeker.DNAtransposons.fasta !
+#	eukaryotic-tRNAs.fa : http://lowelab.ucsc.edu/GtRNAdb/download.html
+#	uniprot_sprot17nov2015.fasta : http://www.uniprot.org/downloads
+#	RepeatPeps.lib : Follows the RepeatMasker (4.0.6) distribution
+#	TEseeker.DNAtransposons.fasta : http://www3.nd.edu/~teseeker/download.html, excluding LTR retrotransposon proteins
+#	Dfam.hmm : http://www.dfam.org/web_download/Current_Release/
+#	gydb/*.hmm : http://gydb.org/index.php/Collection_HMM
+#	RepBase_for_RepeatMasker.20150807.eukaryotes : http://www.girinst.org/server/RepBase/index.php
 
-#	Python scripts (only tested in python2/2.7.9):
-#	change_headers_to_seqN.py (retrived from github)
-#	reprint.tPSI.lib.py (retrived from github)
-#	reprint.ltrharvest.lib.py (retrived from github)
-#	reprint.ltrharvest.lib.new.py !
-#	reprint.filtered.lib.py (retrived from github)
-#	sequence_cleaner.py !
-#	N50.py !
-#	reprint.genome.py !
+#	Python scripts (works in python2/2.7.9):
+#	change_headers_to_seqN.py
+#	reprint.tPSI.lib.py 
+#	reprint.ltrharvest.lib.new.py
+#	reprint.filtered.lib.py
+#	N50.py
+#	reprint.genome.py
+#	classifier.py
+#	dfammer.py
+#	dfammer2.py
 
-#	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang):
+#	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang): She will hopefully publish these scripts soon!
 #	TRIM99.CRL_Step1.pl
 #	TRIM85.CRL_Step1.pl
 #	retro99.CRL_Step1.pl
 #	retro85.CRL_Step1.pl
 #	CRL_Step2.pl 
 #	CRL_Step3.pl 
-#	CRL_Step4.pl !
-#	CRL_Step5.pl ! 
-#	ltr_library.pl !
-
-#	RepeatMasker parsing:
-#	get.rm.master.sh !
-#	get.rm.stats.sh !
-#	get.rm.stats.rename.sh !
-#	get.rm.overview.sh !
+#	CRL_Step4.pl
+#	CRL_Step5.pl
+#	ltr_library.pl
 
 #	Misc:
-#	assemblathon_stats.pl !	
-#	filter_protein_match.lua !
+#	assemblathon_stats.pl : http://korflab.ucdavis.edu/datasets/Assemblathon/Assemblathon2/Basic_metrics/assemblathon_stats.pl
+#	filter_protein_match.lua : Courtesy of Sascha Kastens, https://github.com/satta/ltrsift/tree/master/filters
 
 #	The only parameter given the pipeline is a FASTA file of the genome.
 
@@ -529,7 +527,7 @@ sed 's/ /\t/g' tmp5 \
 
 bedtools getfasta -name -fi $GENOME -bed tmp6 -fo $GENOME.tPSI.fasta
 
-#	The TransposonPSI library is classified according to protein homology
+#	The TransposonPSI library is classified according to protein homology with sequences provided with TransposonPSI
 python2 $REPO/reprint.tPSI.lib.py -i $GENOME.tPSI.fasta | fold -w 60 \
 	> $GENOME.tPSI.classified.fasta
 
@@ -540,8 +538,8 @@ rm tmp* tPSI.classes *tPSI.fasta *TPSI.allHits.chains.gff3  tPSI.log
 rm *TPSI.allHits.chains.bestPerLocus *TPSI.allHits.chains *TPSI.allHits
 ################################
 
----------------------------------Clustering---------------------------------------------#
-Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
+#---------------------------------Clustering---------------------------------------------#
+#	Clustering of tPSI elements are done using CD-HIT-EST with 80% cutoff.
 
 $CDHIT -i $GENOME.tPSI.classified.fasta -o $GENOME.tPSI.classified.fasta.nr.80.n5 \
 -c 0.8 -T 16 -n 5
@@ -632,6 +630,7 @@ fastagrep -p "#Unknown" $GENOME.denovolib | fastagrep -p ">rnd" \
 	> $GENOME.repmod.unknowns.lib
 
 #	Running nhmmscan to search for homology in Dfam.
+#	Splitting the files to speed things up
 
 gt splitfasta -numfiles 10 $GENOME.repmod.unknowns.lib
 
@@ -708,7 +707,7 @@ mkdir $GENOME.repmask.denovo
 mkdir $GENOME.repmask.total
 mkdir $GENOME.repmask.repbase
 
-#	RepeatMasking and creating summaries
+#	RepeatMasking using the de novo library, RepBase repeats alone and combined.
 
 RepeatMasker -lib $GENOME.denovolib.classified -gff -a -s -pa 16 -dir \
 $GENOME.repmask.denovo/ $GENOME
@@ -731,31 +730,8 @@ $GENOME.repmask.repbase/ $GENOME
 $GENOME.repmask.repbase/*.out \
 	> $GENOME.repmask.repbase.summary
 
-#--------------------------------RepeatLandscape-----------------------------------------#
-
-#	The createRepeatLandscape.pl script requires genome size estimates to create pie 
-#	charts. 
-
-#	Getting genome size
-
-assemblathon_stats.pl -csv $GENOME | grep "Total size of scaffolds" | awk '{print $5}' \
-> genomesize
-
-sh $REPO/landscaping.sh $GENOME
-
-#---------------------------------Result parsing-----------------------------------------#
-
-cd $GENOME.repmask.total/
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
-
-cd $GENOME.repmask.denovo/
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
-
-cd $GENOME.repmask.repbase
-sh $REPO/get.rm.master.sh $GENOME
-cd ..
+#	Result: .out files containing the position of each element in each genome, 
+#	for parsing using scripts written by Aurelie Kapusta : https://github.com/4ureliek/Parsing-RepeatMasker-Outputs
 
 ################################
 #	Removal of excess files  
