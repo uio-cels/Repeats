@@ -88,7 +88,7 @@ export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
 
 #-----------------------------Loading modules--------------------------------------------#
 
-module load genometools/1.5.7 
+module load genometools/1.5.7
 module load repeatmodeler/1.0.8
 module load blast/2.2.26
 module load perlmodules/5.10_2
@@ -130,13 +130,13 @@ wait
 
 #------------------------------Filtration and extraction---------------------------------#
 
-#	Running custom scripts provided by Ning Jiang (she will publish them soon) to filter
+#	Running custom scripts provided by Ning Jiang (not yet published) to filter
 # 	the LTRdigest results.
 
 #	First, the putative retrotransposons are only kept if they contain a retrotransposon
-#	specific domain.
+#	specific domain. 'gt' is the genometools module.
 
-gt select -rule_files $REPO/filter_protein_match.lua -- \
+gt select -rule_files $REPO/filter_protein_match.lua -- \ 
 < $GENOME.retrotransposons.gff85.dgt \
 	> $GENOME.retrotransposons.gff85.dgt.withdomains
 
