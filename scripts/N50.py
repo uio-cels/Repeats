@@ -9,7 +9,7 @@ import sys, argparse
 if __name__ == '__main__':
 	
 	parser = argparse.ArgumentParser(description=
-	'This parser will take a list and a library and reprint the library without the elements from the list')
+	'This parser will take a file containing a number (i.e. the N50 value), and only reprint sequences > that number')
 	parser.add_argument('-i', '--input', action='store', help='', type=argparse.FileType('r'), default = '-')
 	parser.add_argument('-n', '--N50')
 	args = parser.parse_args()
