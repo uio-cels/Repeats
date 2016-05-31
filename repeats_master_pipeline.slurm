@@ -47,17 +47,19 @@ export REPO=/projects/cees/in_progress/william/pipeline/repository
 #	RepBase_for_RepeatMasker.20150807.eukaryotes : http://www.girinst.org/server/RepBase/index.php
 
 #	Python scripts (works in python2/2.7.9):
-#	change_headers_to_seqN.py
-#	reprint.tPSI.lib.py 
-#	reprint.ltrharvest.lib.new.py
-#	reprint.filtered.lib.py
-#	N50.py
-#	reprint.genome.py
-#	classifier.py
-#	dfammer.py
-#	dfammer2.py
+#	change_headers_to_seqN.py 	# changes FASTA headers to work in LTRdigest indexing
+#	reprint.tPSI.lib.py  		# changes the FASTA headers in TransposonPSI libraries to follow RepBase classification
+#	reprint.ltrharvest.lib.new.py	# changes headers in the FASTA files produced by LTRharvest, to indicate retrotransposons
+#	reprint.filtered.lib.py		# takes a list and reprints a FASTA file without the elements in the list
+#	N50.py				# filters FASTA files based on a provided N50 value
+#	reprint.genome.py		# reprints FASTA files with new headers: (SEQ1, SEQ2, SEQ3 etc.)
+#	classifier.py			# takes in parsed BLAST results and a FASTA file and classifies the sequences based on the BLAST results
+#	dfammer.py			# takes nhmmscan output with -dfamtblout flag and creates temporary file for dfammer2.py
+#	dfammer2.py			# takes in the output of dfammer.py, outputs a classified FASTA file according to nhmmer results
 
-#	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang): She will hopefully publish these scripts soon!
+#	LTRharvest/LTRdigest filtering (courtesy of Ning Jiang, Michigan State University): 
+#	Hopefully these will be available to everyone soon!
+
 #	TRIM99.CRL_Step1.pl
 #	TRIM85.CRL_Step1.pl
 #	retro99.CRL_Step1.pl
