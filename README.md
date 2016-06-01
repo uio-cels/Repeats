@@ -10,7 +10,7 @@ The scripts used for creating species-specific libraries of TEs are called 'repe
 sbatch repeats_master_pipeline.slurm genome.fasta
 ```
 
-The pipeline runs around a week on medium sizes genomes (0.4 - 1.5 Gb).
+The pipeline runs around a week on medium sized genomes (0.4 - 1.5 Gb).
 
 In addition, the data analysis steps for making the figures can be found in 'notebooks'. Parts of the data frames that were analyzed can be found in 'data' (unfortunately some are too big to be shared entirely). 
 
