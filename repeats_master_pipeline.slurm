@@ -33,7 +33,7 @@ cp $origdir/$1 ${TMPDIR}/${species}_repeats
 
 #	The repository contains databases and scripts used during the pipeline.
 
-export REPO=/projects/cees/in_progress/william/pipeline/repository
+export REPO= 	#Insert path to repository
 
 #---Content of the repository:
 
@@ -80,11 +80,11 @@ export GENOME=$1
 
 #	Point to a modified version of TransposonPSI with dual core usage.
 
-export tPSI=/projects/cees/bin/TransposonPSI/dualcore_transposonPSI.pl
+export tPSI=	# insert path to tPSI
 
 #	Point to CD-HIT -- Can probably change this with using the module system
 
-export CDHIT=/projects/cees/bin/cd-hit/cd-hit-v4.6.4-2015-0603/cd-hit-est
+export CDHIT= 	# insert path to CD-HIT
 
 #-----------------------------Loading modules--------------------------------------------#
 
